@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.venv/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Flask / logs
+*.log
+instance/
+prediction_logs.db
+report_logs.db
+
+# React / Node
+frontend/node_modules/
+frontend/.env
+frontend/build/
+frontend/.env.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Data files (optional – you may want to commit raw data but skip processed)
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/generate_hypertension_data.py   # keep the script
+
+# Models – large .joblib files (skip them, they can be regenerated)
+models/saved/*.joblib
+models/saved/*.h5
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# SHAP / matplotlib outputs
+docs/*.png
+docs/*.html

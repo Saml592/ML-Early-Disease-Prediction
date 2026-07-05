@@ -1,0 +1,334 @@
+openapi: "3.0.3"
+info:
+  title: ML Disease Prediction API
+  version: "1.0.0"
+  description: |
+    REST API for chronic disease risk prediction (diabetes, cardiovascular
+    disease, hypertension) using Logistic Regression, Random Forest, and
+    ANN models with SHAP explainability.
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Health
+  - name: Prediction
+  - name: Explainability
+
+paths:
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /predict:
+    post:
+      tags: [Prediction]
+      summary: Predict disease risk for one or more diseases
+      description: |
+        Runs all three trained models (Logistic Regression, Random Forest, ANN)
+        for each requested disease and returns risk probability (0–100%) plus a
+        binary "At Risk" / "Not at Risk" label at the 0.5 confidence threshold.
+        Every prediction is logged to the `prediction_logs` database table.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PredictionRequest"
+            example:
+              patient:
+                age: 45
+                bmi: 28.4
+                glucose: 130
+                blood_pressure: 80
+                cholesterol: 210
+                family_history: 1
+                smoking_status: Former
+                pregnancies: 2
+                skin_thickness: 25
+                insulin: 85
+                diabetes_pedigree_function: 0.45
+                sex: 1
+                cp: 2
+                fbs: 0
+                restecg: 1
+                thalach: 150
+                exang: 0
+                oldpeak: 1.2
+                slope: 1
+                ca: 0
+                thal: 2
+                sodium_intake: 3200
+                alcohol_units_week: 4
+                physical_activity_min_week: 90
+                stress_score: 6
+                resting_heart_rate: 76
+      responses:
+        "200":
+          description: Prediction results per disease and model
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /explain/{disease}:
+    post:
+      tags: [Explainability]
+      summary: Get SHAP explanation for a disease prediction
+      description: |
+        Returns SHAP values and per-feature contribution percentages for the
+        given patient and disease. Defaults to explaining the Random Forest
+        model; pass `model_type` to explain Logistic Regression or ANN instead.
+      parameters:
+        - name: disease
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [diabetes, heart, hypertension]
+          description: The disease to explain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExplainRequest"
+            example:
+              model_type: random_forest
+              patient:
+                age: 45
+                bmi: 28.4
+                glucose: 130
+                blood_pressure: 80
+                pregnancies: 2
+                skin_thickness: 25
+                insulin: 85
+                diabetes_pedigree_function: 0.45
+      responses:
+        "200":
+          description: SHAP explanation payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExplainResponse"
+        "404":
+          description: Unknown disease
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          description: SHAP computation failed
+
+components:
+
+  schemas:
+
+    PatientData:
+      type: object
+      required: [age]
+      properties:
+        age:
+          type: integer
+          minimum: 1
+          maximum: 120
+        bmi:
+          type: number
+          minimum: 10
+          maximum: 80
+        glucose:
+          type: number
+          minimum: 0
+          maximum: 500
+        blood_pressure:
+          type: number
+          minimum: 0
+          maximum: 300
+        cholesterol:
+          type: number
+          minimum: 0
+          maximum: 700
+        family_history:
+          type: integer
+          enum: [0, 1]
+        smoking_status:
+          type: string
+          enum: [Never, Former, Current]
+        pregnancies:
+          type: integer
+          minimum: 0
+          maximum: 20
+        skin_thickness:
+          type: number
+        insulin:
+          type: number
+        diabetes_pedigree_function:
+          type: number
+        sex:
+          type: integer
+          enum: [0, 1]
+        cp:
+          type: integer
+          enum: [0, 1, 2, 3]
+        fbs:
+          type: integer
+          enum: [0, 1]
+        restecg:
+          type: integer
+          enum: [0, 1, 2]
+        thalach:
+          type: number
+        exang:
+          type: integer
+          enum: [0, 1]
+        oldpeak:
+          type: number
+        slope:
+          type: integer
+          enum: [0, 1, 2]
+        ca:
+          type: integer
+          enum: [0, 1, 2, 3, 4]
+        thal:
+          type: integer
+          enum: [0, 1, 2, 3]
+        sodium_intake:
+          type: number
+        alcohol_units_week:
+          type: number
+        physical_activity_min_week:
+          type: number
+        stress_score:
+          type: number
+          minimum: 0
+          maximum: 10
+        resting_heart_rate:
+          type: number
+
+    PredictionRequest:
+      type: object
+      required: [patient]
+      properties:
+        patient:
+          $ref: "#/components/schemas/PatientData"
+        diseases:
+          type: array
+          items:
+            type: string
+            enum: [diabetes, heart, hypertension]
+          description: Subset of diseases to run (omit for all three)
+
+    ModelResult:
+      type: object
+      properties:
+        risk_probability_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Risk probability as a percentage
+        prediction:
+          type: string
+          enum: [At Risk, Not at Risk]
+        confidence_threshold:
+          type: number
+          example: 0.5
+        error:
+          type: string
+          description: Present only if this model failed to run
+
+    DiseaseResult:
+      type: object
+      description: Model type → ModelResult
+      additionalProperties:
+        $ref: "#/components/schemas/ModelResult"
+
+    PredictionResponse:
+      type: object
+      properties:
+        results:
+          type: object
+          description: Disease name → DiseaseResult
+          additionalProperties:
+            $ref: "#/components/schemas/DiseaseResult"
+        errors:
+          type: object
+          description: Disease name → error message (present only when a disease failed)
+          additionalProperties:
+            type: string
+
+    FeatureContribution:
+      type: object
+      properties:
+        shap_value:
+          type: number
+          description: Raw SHAP value (positive = increases risk)
+        contribution_pct:
+          type: number
+          description: Percentage of total |SHAP| mass attributed to this feature
+        feature_value:
+          type: number
+          description: The scaled value of this feature for the given patient
+
+    ExplainRequest:
+      type: object
+      required: [patient]
+      properties:
+        patient:
+          $ref: "#/components/schemas/PatientData"
+        model_type:
+          type: string
+          enum: [logistic_regression, random_forest, ann]
+          default: random_forest
+
+    ExplainResponse:
+      type: object
+      properties:
+        disease:
+          type: string
+        model_type:
+          type: string
+        base_value:
+          type: number
+          description: SHAP base (expected) value — the average model output over background data
+        predicted_probability_pct:
+          type: number
+          description: Final predicted probability as a percentage
+        prediction:
+          type: string
+          enum: [At Risk, Not at Risk]
+        feature_contributions:
+          type: object
+          description: Feature name → FeatureContribution (sorted by |SHAP| descending)
+          additionalProperties:
+            $ref: "#/components/schemas/FeatureContribution"
+
+  responses:
+    ValidationError:
+      description: Input validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object

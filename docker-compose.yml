@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: disease_prediction_db
+    environment:
+      POSTGRES_USER: dp_user
+      POSTGRES_PASSWORD: dp_password
+      POSTGRES_DB: disease_prediction
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dp_user -d disease_prediction"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: disease_prediction_api
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://dp_user:dp_password@postgres:5432/disease_prediction
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./models/saved:/app/models/saved:ro
+      - ./data/processed:/app/data/processed:ro
+    restart: unless-stopped
+
+  # Uncomment to include the React frontend in Docker Compose
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.frontend
+  #   container_name: disease_prediction_frontend
+  #   ports:
+  #     - "3000:80"
+  #   environment:
+  #     REACT_APP_API_BASE_URL: http://localhost:5000
+  #   depends_on:
+  #     - api
+
+volumes:
+  pgdata:

@@ -1,0 +1,645 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Disease Risk Assessment Report — {{ report_ref }}</title>
+    <style>
+        /* ── Page setup (WeasyPrint paged media) ─────────────────────────── */
+        @page {
+            size: A4;
+            margin: 14mm 14mm 20mm 14mm;
+
+            @top-left {
+                content: "ML Disease Prediction System";
+                font-size: 8pt;
+                color: #888;
+                font-family: Arial, sans-serif;
+            }
+
+            @top-right {
+                content: "{{ report_ref }}";
+                font-size: 8pt;
+                color: #888;
+                font-family: Arial, sans-serif;
+            }
+
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages) "  ·  Generated {{ report_date }}";
+                font-size: 7.5pt;
+                color: #aaa;
+                font-family: Arial, sans-serif;
+            }
+        }
+
+        /* ── Base ────────────────────────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, "Helvetica Neue", sans-serif;
+            font-size: 9.5pt;
+            color: #1a1a2e;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            font-size: 15pt;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 11pt;
+            margin: 0 0 6px 0;
+        }
+
+        h3 {
+            font-size: 9.5pt;
+            margin: 10px 0 4px 0;
+        }
+
+        p {
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            padding: 5px 8px;
+            text-align: left;
+        }
+
+        /* ── Header band ─────────────────────────────────────────────────── */
+        .report-header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: #ffffff;
+            padding: 14px 18px 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 0;
+        }
+
+        .header-brand h1 {
+            color: #ffffff;
+            font-size: 14pt;
+        }
+
+        .header-brand p {
+            color: #c5cae9;
+            font-size: 8.5pt;
+            margin: 3px 0 0 0;
+        }
+
+        .header-meta table {
+            width: auto;
+        }
+
+        .header-meta td {
+            padding: 1px 4px;
+            font-size: 8pt;
+            color: #c5cae9;
+        }
+
+        .header-meta td:first-child {
+            color: #9fa8da;
+            text-align: right;
+        }
+
+        /* ── Horizontal rule under header ────────────────────────────────── */
+        .header-rule {
+            height: 3px;
+            background: linear-gradient(90deg, #3949ab, #7986cb, #3949ab);
+            margin-bottom: 14px;
+        }
+
+        /* ── Section wrapper ─────────────────────────────────────────────── */
+        .section {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #283593;
+            border-bottom: 1.5px solid #c5cae9;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Demographics table ──────────────────────────────────────────── */
+        .demo-table td {
+            padding: 4px 10px;
+            font-size: 9pt;
+            border: none;
+        }
+
+        .demo-table tr:nth-child(even) td {
+            background: #f5f5f5;
+        }
+
+        .demo-label {
+            color: #555;
+            width: 34%;
+            font-weight: 600;
+        }
+
+        .demo-value {
+            color: #1a1a2e;
+        }
+
+        /* ── Disease section card ────────────────────────────────────────── */
+        .disease-card {
+            border-radius: 4px;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+            border: 1.5px solid;
+            overflow: hidden;
+        }
+
+        .disease-card.at-risk {
+            border-color: #c62828;
+        }
+
+        .disease-card.not-at-risk {
+            border-color: #2e7d32;
+        }
+
+        .disease-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 14px;
+            color: #ffffff;
+        }
+
+        .disease-card.at-risk .disease-card-header {
+            background: #c62828;
+        }
+
+        .disease-card.not-at-risk .disease-card-header {
+            background: #2e7d32;
+        }
+
+        .disease-card-header h2 {
+            color: #ffffff;
+            font-size: 11pt;
+        }
+
+        .risk-badge {
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.7);
+            color: #ffffff;
+        }
+
+        .disease-card-body {
+            padding: 10px 14px 12px 14px;
+        }
+
+        /* ── Gauge bar ───────────────────────────────────────────────────── */
+        .gauge-wrapper {
+            margin: 6px 0 12px 0;
+        }
+
+        .gauge-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gauge-label-text {
+            font-size: 8pt;
+            color: #555;
+            width: 130px;
+            flex-shrink: 0;
+        }
+
+        .gauge-track {
+            flex: 1;
+            height: 14px;
+            background: #e0e0e0;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.3s;
+        }
+
+        .gauge-pct-text {
+            font-size: 9pt;
+            font-weight: bold;
+            width: 42px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* ── Model comparison table ──────────────────────────────────────── */
+        .model-table {
+            margin: 8px 0;
+            font-size: 8.5pt;
+        }
+
+        .model-table th {
+            background: #e8eaf6;
+            color: #283593;
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 2px solid #c5cae9;
+            padding: 5px 8px;
+        }
+
+        .model-table td {
+            border-bottom: 1px solid #eeeeee;
+            padding: 5px 8px;
+        }
+
+        .model-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .model-table tr:hover td {
+            background: #fafafa;
+        }
+
+        .pred-at-risk {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .pred-not-at-risk {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        /* ── Mini gauge inside table ─────────────────────────────────────── */
+        .mini-gauge-track {
+            width: 80px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .mini-gauge-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        /* ── SHAP chart ──────────────────────────────────────────────────── */
+        .shap-section {
+            margin-top: 12px;
+        }
+
+        .shap-section h3 {
+            font-size: 9pt;
+            color: #283593;
+            margin-bottom: 3px;
+        }
+
+        .shap-note {
+            font-size: 7.5pt;
+            color: #777;
+            margin-bottom: 6px;
+        }
+
+        .shap-img {
+            width: 100%;
+            max-width: 600px;
+            display: block;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+        }
+
+        .shap-unavailable {
+            font-size: 8pt;
+            color: #999;
+            font-style: italic;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+
+        /* ── Error in disease section ─────────────────────────────────────── */
+        .disease-error {
+            font-size: 8pt;
+            color: #b71c1c;
+            background: #ffebee;
+            padding: 6px 10px;
+            border-radius: 3px;
+            margin-top: 6px;
+        }
+
+        /* ── Disclaimer ──────────────────────────────────────────────────── */
+        .disclaimer {
+            border: 2px solid #f57f17;
+            background: #fffde7;
+            border-radius: 4px;
+            padding: 12px 14px;
+            margin-top: 14px;
+            page-break-inside: avoid;
+        }
+
+        .disclaimer-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #e65100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .disclaimer p {
+            font-size: 8.5pt;
+            color: #4e342e;
+            line-height: 1.6;
+            margin: 3px 0;
+        }
+
+        /* ── WeasyPrint fallback notice ──────────────────────────────────── */
+        .html-fallback-notice {
+            background: #e3f2fd;
+            border: 1.5px solid #1565c0;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 8pt;
+            color: #0d47a1;
+            margin-bottom: 12px;
+        }
+
+        /* ── Footer (inside body, supplements @page @bottom) ─────────────── */
+        .report-footer {
+            margin-top: 18px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 6px;
+            font-size: 7.5pt;
+            color: #aaa;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- HEADER                                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="report-header">
+        <div class="header-brand">
+            <h1>&#x2665;&nbsp; Disease Risk Assessment Report</h1>
+            <p>ML-Powered Early Disease Prediction System</p>
+        </div>
+        <div class="header-meta">
+            <table>
+                <tr>
+                    <td>Reference</td>
+                    <td>{{ report_ref }}</td>
+                </tr>
+                <tr>
+                    <td>Generated</td>
+                    <td>{{ report_date }}</td>
+                </tr>
+                <tr>
+                    <td>Models</td>
+                    <td>LR &middot; RF &middot; ANN + SHAP</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="header-rule"></div>
+
+    {% if not weasyprint_ok %}
+    <div class="html-fallback-notice">
+        &#9432;&nbsp; <strong>PDF engine unavailable</strong> — WeasyPrint / GTK3 is not installed.
+        This is the HTML fallback. Open it in your browser and use
+        <strong>File &rarr; Print &rarr; Save as PDF</strong> to produce a PDF copy.
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PATIENT DEMOGRAPHICS                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section">
+        <div class="section-title">Patient Demographics</div>
+        <table class="demo-table">
+            <tr>
+                <td class="demo-label">Age</td>
+                <td class="demo-value">{{ patient.age }} years</td>
+                <td class="demo-label">BMI</td>
+                <td class="demo-value">
+                    {%- if patient.bmi %}{{ "%.1f"|format(patient.bmi) }} kg/m²{% else %}—{% endif %}
+                </td>
+                <td class="demo-label">Sex</td>
+                <td class="demo-value">
+                    {%- if patient.sex is not none %}{{ "Male" if patient.sex == 1 else "Female" }}{% else %}—{% endif
+                    %}
+                </td>
+            </tr>
+            <tr>
+                <td class="demo-label">Glucose (mg/dL)</td>
+                <td class="demo-value">{{ patient.glucose if patient.glucose else "—" }}</td>
+                <td class="demo-label">Blood Pressure</td>
+                <td class="demo-value">
+                    {%- if patient.blood_pressure %}{{ patient.blood_pressure }} mm Hg{% else %}—{% endif %}
+                </td>
+                <td class="demo-label">Cholesterol</td>
+                <td class="demo-value">
+                    {%- if patient.cholesterol %}{{ patient.cholesterol }} mg/dL{% else %}—{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="demo-label">Smoking Status</td>
+                <td class="demo-value">{{ patient.smoking_status or "—" }}</td>
+                <td class="demo-label">Family History</td>
+                <td class="demo-value">
+                    {%- if patient.family_history is not none %}
+                    {{ "Yes" if patient.family_history == 1 else "No" }}
+                    {%- else %}—{% endif %}
+                </td>
+                <td class="demo-label">Resting HR</td>
+                <td class="demo-value">
+                    {%- if patient.resting_heart_rate %}{{ patient.resting_heart_rate }} bpm{% else %}—{% endif %}
+                </td>
+            </tr>
+            {% if patient.sodium_intake or patient.stress_score or patient.physical_activity_min_week %}
+            <tr>
+                <td class="demo-label">Sodium Intake</td>
+                <td class="demo-value">
+                    {%- if patient.sodium_intake %}{{ patient.sodium_intake }} mg/day{% else %}—{% endif %}
+                </td>
+                <td class="demo-label">Stress Score</td>
+                <td class="demo-value">{{ patient.stress_score if patient.stress_score is not none else "—" }} / 10</td>
+                <td class="demo-label">Physical Activity</td>
+                <td class="demo-value">
+                    {%- if patient.physical_activity_min_week %}{{ patient.physical_activity_min_week }} min/wk{% else
+                    %}—{% endif %}
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PER-DISEASE SECTIONS                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    {% for disease, result in disease_results.items() %}
+
+    {% set is_at_risk = result.consensus == "At Risk" %}
+    {% set gauge_color = "#c62828" if is_at_risk else "#2e7d32" %}
+    {% set card_class = "at-risk" if is_at_risk else "not-at-risk" %}
+
+    <div class="disease-card {{ card_class }}">
+
+        <!-- Card header -->
+        <div class="disease-card-header">
+            <h2>{{ result.label }}</h2>
+            <span class="risk-badge">{{ result.consensus | upper }}</span>
+        </div>
+
+        <!-- Card body -->
+        <div class="disease-card-body">
+
+            {% if result.error is defined %}
+            <div class="disease-error">
+                &#9888;&nbsp; Could not compute risk for this disease: {{ result.error }}
+            </div>
+            {% else %}
+
+            <!-- Gauge bar -->
+            <div class="gauge-wrapper">
+                <div class="gauge-row">
+                    <span class="gauge-label-text">Overall Risk Score</span>
+                    <div class="gauge-track">
+                        <div class="gauge-fill" style="width: {{ [result.max_risk_pct, 100]|min }}%;
+                        background-color: {{ gauge_color }};"></div>
+                    </div>
+                    <span class="gauge-pct-text" style="color: {{ gauge_color }};">
+                        {{ "%.1f"|format(result.max_risk_pct) }}%
+                    </span>
+                </div>
+            </div>
+
+            <!-- Model predictions table -->
+            <table class="model-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Risk Score</th>
+                        <th style="width:120px;">Visual</th>
+                        <th>Prediction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mt, mr in result.model_results.items() %}
+                    <tr>
+                        <td>{{ model_labels.get(mt, mt) }}</td>
+                        {% if mr.get("error") %}
+                        <td colspan="3" style="color:#b71c1c; font-size:8pt;">Error: {{ mr.error }}</td>
+                        {% else %}
+                        {% set rp = mr.risk_probability_pct %}
+                        {% set mc = "#c62828" if rp >= 50 else "#2e7d32" %}
+                        <td style="font-weight:600; color:{{ mc }};">{{ "%.1f"|format(rp) }}%</td>
+                        <td>
+                            <div class="mini-gauge-track">
+                                <div class="mini-gauge-fill" style="width:{{ [rp,100]|min }}%; background:{{ mc }};">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="{{ 'pred-at-risk' if mr.prediction == 'At Risk' else 'pred-not-at-risk' }}">
+                            {{ mr.prediction }}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- SHAP chart -->
+            <div class="shap-section">
+                <h3>Feature Importance (SHAP Analysis)</h3>
+                {% if result.shap_chart_b64 %}
+                <p class="shap-note">
+                    Features are sorted by impact magnitude.
+                    <span style="color:#c62828;">&#9632;</span> Red&nbsp;= increases risk &nbsp;&nbsp;
+                    <span style="color:#2e7d32;">&#9632;</span> Green&nbsp;= decreases risk.
+                    SHAP values reflect how much each feature shifted the predicted probability
+                    away from the population average.
+                </p>
+                <img class="shap-img" src="data:image/png;base64,{{ result.shap_chart_b64 }}"
+                    alt="SHAP Feature Importance — {{ result.label }}" />
+                {% else %}
+                <p class="shap-unavailable">
+                    SHAP chart could not be generated for this disease (model file may be
+                    missing; run <code>python -m src.models.compare_models</code> first).
+                </p>
+                {% endif %}
+            </div>
+
+            {% endif %}{# end error check #}
+        </div>{# disease-card-body #}
+    </div>{# disease-card #}
+    {% endfor %}
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- DISCLAIMER                                                           -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="disclaimer">
+        <div class="disclaimer-title">
+            &#9888;&nbsp; Important Disclaimer
+        </div>
+        <p>
+            <strong>This report is a decision-support tool and not a clinical diagnosis.</strong>
+            The risk scores are statistical estimates produced by machine learning models
+            trained on population-level data. They do not account for an individual's full
+            medical history, current medications, or clinical examination findings.
+        </p>
+        <p>
+            These results must be interpreted by a qualified healthcare professional in
+            the context of the patient's complete clinical picture. Do not use this report
+            as the sole basis for any diagnostic or treatment decision.
+        </p>
+        <p style="margin-top:6px; font-size:8pt; color:#6d4c41;">
+            Models: Logistic Regression, Random Forest, Neural Network (ANN) &nbsp;&middot;&nbsp;
+            Explainability: SHAP (SHapley Additive exPlanations) &nbsp;&middot;&nbsp;
+            Datasets: Pima Indians Diabetes, Cleveland Heart Disease, Synthetic Hypertension
+        </p>
+    </div>
+
+    <!-- Body footer -->
+    <div class="report-footer">
+        ML-Powered Early Disease Prediction System &nbsp;&middot;&nbsp;
+        {{ report_ref }} &nbsp;&middot;&nbsp; {{ report_date }}
+    </div>
+
+</body>
+
+</html>
