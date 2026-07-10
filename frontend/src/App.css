@@ -4,6 +4,69 @@
   padding: 24px;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.username {
+  font-weight: 600;
+  color: #2c3e6b;
+  font-size: 0.95rem;
+}
+
+.email {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+}
+
+.logout-button:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-button:active {
+  transform: translateY(0);
+}
+
 .app-header h1 {
   font-size: 1.8rem;
   margin-bottom: 4px;
@@ -12,6 +75,28 @@
 .app-header p {
   color: #555;
   max-width: 720px;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-right {
+    align-items: flex-start;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .user-info {
+    align-items: flex-start;
+  }
+
+  .logout-button {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .app-main {

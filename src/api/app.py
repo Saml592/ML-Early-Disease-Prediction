@@ -2,7 +2,7 @@
 app.py
 ------
 Flask app factory for the Disease Prediction API. Enables CORS for the
-React frontend, registers the /predict, /explain, and /report blueprints,
+React frontend, registers the /predict, /explain, /report, and /auth blueprints,
 and initialises the database tables on startup.
 
 Run locally with:
@@ -19,6 +19,7 @@ from src.api.database import init_db
 from src.api.routes.explain import explain_bp
 from src.api.routes.predict import predict_bp
 from src.api.routes.report import report_bp
+from src.api.routes.auth import auth_bp
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -40,6 +41,7 @@ def create_app() -> Flask:
     app.register_blueprint(predict_bp)
     app.register_blueprint(explain_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(auth_bp)
 
     @app.route("/health", methods=["GET"])
     def health():

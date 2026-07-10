@@ -1,9 +1,8 @@
 """
 database.py
 ------------
-SQLAlchemy engine/session setup for PostgreSQL, plus the `PredictionLog`
-ORM model used to persist every /predict request+response for audit and
-monitoring purposes.
+SQLAlchemy engine/session setup for PostgreSQL, plus ORM models for
+PredictionLog, ReportLog, and User authentication.
 
 Connection is configured via the DATABASE_URL environment variable, e.g.:
     postgresql+psycopg2://user:password@localhost:5432/disease_prediction
@@ -18,6 +17,7 @@ import os
 
 from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from src.utils.logger import get_logger
 
@@ -34,12 +34,39 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+class User(Base):
+    """User model for authentication."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(80), unique=True, nullable=False, index=True)
+    email = Column(String(120), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+
+    def set_password(self, password: str):
+        """Hash and set the password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Verify the password against the stored hash."""
+        return check_password_hash(self.password_hash, password)
+
+
 class PredictionLog(Base):
     """One row per /predict (or /explain) API call."""
 
     __tablename__ = "prediction_logs"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, nullable=True, index=True
+    )  # Optional: link to user if authenticated
     timestamp = Column(
         DateTime,
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
@@ -78,11 +105,13 @@ def log_prediction(
     prediction_label: str,
     model_used: str = None,
     endpoint: str = "predict",
+    user_id: int = None,
 ):
     """Convenience helper: open a session, insert a PredictionLog row, commit, close."""
     db = SessionLocal()
     try:
         entry = PredictionLog(
+            user_id=user_id,
             disease=disease,
             request_payload=request_payload,
             risk_probability=risk_probability,
