@@ -11,7 +11,7 @@ import "../styles/History.css";
 const getAuthToken = () => localStorage.getItem("authToken");
 
 const apiClient = axios.create({
-  baseURL: "/predict",  // matches the backend blueprint prefix
+  baseURL: "/predict",
 });
 
 apiClient.interceptors.request.use(
@@ -32,32 +32,31 @@ export default function History() {
   const [offset, setOffset] = useState(0);
   const [diseaseFilter, setDiseaseFilter] = useState("");
 
-  const fetchHistory = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        limit,
-        offset,
-      });
-      if (diseaseFilter) params.append("disease", diseaseFilter);
-      const res = await apiClient.get(`/history?${params.toString()}`);
-      if (res.data.success) {
-        setPredictions(res.data.data.data);
-        setTotal(res.data.data.total);
-      } else {
-        setError(res.data.error || "Failed to load history");
-      }
-    } catch (err) {
-      setError(err.message || "Network error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ---- fetchHistory is now inside useEffect ----
   useEffect(() => {
-    fetchHistory();
-  }, [limit, offset, diseaseFilter]);
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ limit, offset });
+        if (diseaseFilter) params.append("disease", diseaseFilter);
+        const res = await apiClient.get(`/history?${params.toString()}`);
+        if (res.data.success) {
+          setPredictions(res.data.data.data);
+          setTotal(res.data.data.total);
+        } else {
+          setError(res.data.error || "Failed to load history");
+        }
+      } catch (err) {
+        setError(err.message || "Network error");
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchHistory();
+  }, [limit, offset, diseaseFilter]); // all dependencies are explicit
+
+  // ---- Pagination handlers ----
   const handlePrevPage = () => {
     if (offset - limit >= 0) setOffset(offset - limit);
   };
@@ -71,6 +70,7 @@ export default function History() {
     setOffset(0);
   };
 
+  // ---- Loading / Error states ----
   if (loading) {
     return (
       <div className="history-loading">
@@ -89,6 +89,7 @@ export default function History() {
     );
   }
 
+  // ---- Render ----
   return (
     <div className="history-page">
       <div className="page-header">

@@ -138,8 +138,26 @@ export default function Patients() {
   };
 
   useEffect(() => {
-    fetchPatients();
-  }, [limit, offset, search]);
+  const fetchPatients = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ limit, offset });
+      if (search) params.append("search", search);
+      const res = await apiClient.get(`/?${params.toString()}`);
+      if (res.data.success) {
+        setPatients(res.data.data.data);
+        setTotal(res.data.data.total);
+      } else {
+        setError(res.data.error || "Failed to load patients");
+      }
+    } catch (err) {
+      setError(err.message || "Network error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchPatients();
+}, [limit, offset, search]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
