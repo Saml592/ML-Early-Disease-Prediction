@@ -54,6 +54,8 @@ from src.api.utils import (
 from src.explainability.shap_explainer import explain_prediction
 from src.utils.config import CONFIDENCE_THRESHOLD, DISEASES
 from src.utils.logger import get_logger
+from sqlalchemy import desc  # <-- add this
+from ..database import get_db, ReportLog
 
 logger = get_logger(__name__)
 report_bp = Blueprint("report", __name__)
@@ -404,3 +406,45 @@ def generate_report():
         format_returned=fmt,
     )
     return response, 200
+
+
+@report_bp.route("/", methods=["GET"])
+def list_reports():
+    """
+    GET /api/reports
+    List all report logs with metadata.
+    Query params: limit (default 50), offset (default 0)
+    Returns JSON array of report entries.
+    """
+    try:
+        db = get_db()
+        limit = request.args.get("limit", 50, type=int)
+        offset = request.args.get("offset", 0, type=int)
+
+        reports = (
+            db.query(ReportLog)
+            .order_by(desc(ReportLog.timestamp))
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+        result = []
+        for r in reports:
+            result.append(
+                {
+                    "id": r.id,
+                    "report_ref": r.report_ref,
+                    "timestamp": r.timestamp.isoformat(),
+                    "patient_age": r.patient_age,
+                    "diseases_included": r.diseases_included,
+                    "model_type": r.model_type_for_shap,
+                    "status": r.status,
+                    "format": r.format_returned,
+                    "error_message": r.error_message,
+                }
+            )
+
+        return jsonify({"success": True, "data": result}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

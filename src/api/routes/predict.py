@@ -19,6 +19,7 @@ from src.api.schemas import PredictionRequest
 from src.api.utils import build_model_input, predict_with_model
 from src.utils.config import CONFIDENCE_THRESHOLD, DISEASES
 from src.utils.logger import get_logger
+from ..db_helpers import get_predictions_history  # at top
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ predict_bp = Blueprint("predict", __name__)
 MODEL_TYPES = ["logistic_regression", "random_forest", "ann"]
 
 
-@predict_bp.route("/predict", methods=["POST"])
+@predict_bp.route("/", methods=["POST"])
 def predict():
     payload = request.get_json(silent=True)
     if payload is None:
@@ -86,3 +87,20 @@ def predict():
 
     status_code = 200 if results else 422
     return jsonify(response), status_code
+
+
+@predict_bp.route("/history", methods=["GET"])
+def get_prediction_history():
+    """
+    GET /predict/history
+    Query params: limit (default 20), offset (default 0), disease (optional)
+    Returns paginated prediction logs.
+    """
+    try:
+        limit = request.args.get("limit", 20, type=int)
+        offset = request.args.get("offset", 0, type=int)
+        disease = request.args.get("disease", None)
+        result = get_predictions_history(limit=limit, offset=offset, disease=disease)
+        return jsonify({"success": True, "data": result}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

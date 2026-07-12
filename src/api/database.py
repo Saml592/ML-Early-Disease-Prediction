@@ -58,6 +58,31 @@ class User(Base):
         return check_password_hash(self.password_hash, password)
 
 
+class Patient(Base):
+    """Patient model for patient management."""
+
+    __tablename__ = "patients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(120), nullable=False, index=True)
+    email = Column(String(120), unique=True, nullable=False, index=True)
+    phone = Column(String(20), nullable=True)
+    age = Column(Integer, nullable=True)
+    gender = Column(String(16), nullable=True)
+    medical_history = Column(String(500), nullable=True)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+        onupdate=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
+
+
 class PredictionLog(Base):
     """One row per /predict (or /explain) API call."""
 
@@ -72,6 +97,11 @@ class PredictionLog(Base):
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
         nullable=False,
     )
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+    )
     disease = Column(String(32), nullable=False, index=True)
     request_payload = Column(JSON, nullable=False)
     risk_probability = Column(Float, nullable=False)
@@ -80,6 +110,7 @@ class PredictionLog(Base):
     endpoint = Column(
         String(32), nullable=False, default="predict"
     )  # "predict" | "explain"
+    shaply_values = Column(JSON, nullable=True)  # SHAP explanation values
 
 
 def init_db():
@@ -176,3 +207,13 @@ def log_report(
         logger.error(f"Failed to log report to database: {exc}")
     finally:
         db.close()
+
+
+def get_db():
+    """
+    Return a new database session.
+
+    This is used by routes that were written with a simple `db = get_db()` pattern.
+    Note: The session must be closed manually (or use `with` context).
+    """
+    return SessionLocal()

@@ -1,23 +1,30 @@
 /**
  * App.jsx
  * -------
- * Main app component with routing, authentication, and layout.
+ * Main app component with sidebar, top navigation, and routing.
  */
 
 import React, { useState } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Sidebar from "./components/Sidebar";
+import TopNavigation from "./components/TopNavigation";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Reports from "./pages/Reports";
+import History from "./pages/History";
+import Patients from "./pages/Patients";
 import PatientForm from "./components/PatientForm";
 import PredictionResult from "./components/PredictionResult";
-import "./App.css";
+import "./styles/App.css";
 
 export default function App() {
   const { isAuthenticated, user, logout, loading } = useAuth();
+  const [currentPage, setCurrentPage] = useState("dashboard");
   const [predictionData, setPredictionData] = useState(null);
   const [patientPayload, setPatientPayload] = useState(null);
-  const [currentPage, setCurrentPage] = useState("dashboard");
 
   const handleResult = (data, payload) => {
     setPredictionData(data);
@@ -27,6 +34,11 @@ export default function App() {
   const handleLogout = () => {
     logout();
     window.location.href = "/signin";
+  };
+
+  const handleSearch = (query) => {
+    console.log("Search query:", query);
+    // Implement search functionality
   };
 
   // Show loading state
@@ -39,87 +51,137 @@ export default function App() {
     );
   }
 
-  // Route: Sign In
-if (currentPage === "signin" && !isAuthenticated) {
-  return (
-    <SignIn
-      onSignInSuccess={() => setCurrentPage("dashboard")}
-      onSwitchToSignUp={() => {    // <-- THIS MUST EXIST
-        console.log("Switching to signup");
-        setCurrentPage("signup");
-      }}
-    />
-  );
-}
-
-  // Route: Sign Up
-  if (currentPage === "signup" && !isAuthenticated) {
-  return (
-    <SignUp
-      onSignUpSuccess={() => setCurrentPage("dashboard")}
-      onSwitchToSignIn={() => setCurrentPage("signin")}   // <-- ADD THIS
-    />
-  );
-}
-
-
-  // Redirect to signin if not authenticated
-if (!isAuthenticated) {
-    return (
-        <SignIn
-            onSignInSuccess={() => setCurrentPage("dashboard")}
-            onSwitchToSignUp={() => {
-                console.log("Switching to signup from fallback");
-                setCurrentPage("signup");
-            }}
+  if (!isAuthenticated) {
+    // If the user explicitly wants to go to the sign-up page
+    if (currentPage === "signup") {
+      return (
+        <SignUp
+          onSignUpSuccess={() => setCurrentPage("dashboard")}
+          onSwitchToSignIn={() => setCurrentPage("signin")}
         />
+      );
+    }
+    // Default: show sign-in page (with link to sign-up)
+    return (
+      <SignIn
+        onSignInSuccess={() => setCurrentPage("dashboard")}
+        onSwitchToSignUp={() => setCurrentPage("signup")}
+      />
     );
-}
+  }
 
-  // Route: Dashboard (Protected)
+  // Authenticated Routes with Sidebar Layout
   return (
     <ProtectedRoute>
-      <div className="app-container">
-        <header className="app-header">
-          <div className="header-left">
-            <h1>ML-Powered Early Disease Prediction System</h1>
-            <p>
-              Estimate risk of diabetes, cardiovascular disease, and hypertension using
-              Logistic Regression, Random Forest, and Neural Network models, with SHAP
-              explainability.
-            </p>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <span className="username">{user?.username}</span>
-              <span className="email">{user?.email}</span>
+      <div className="app-layout">
+        <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+        <TopNavigation user={user} onLogout={handleLogout} onSearch={handleSearch} />
+
+        <main className="app-content">
+          {currentPage === "dashboard" && <Dashboard />}
+
+          {currentPage === "prediction" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Disease Prediction</h1>
+                <p>Enter patient information to predict disease risk</p>
+              </div>
+              <div className="prediction-layout">
+                <section className="prediction-form-section">
+                  <h2>Patient Information</h2>
+                  <PatientForm onResult={handleResult} />
+                </section>
+
+                <section className="prediction-results-section">
+                  <h2>Prediction Results</h2>
+                  {!predictionData && (
+                    <div className="empty-state">
+                      <p>Submit the form to see risk predictions.</p>
+                    </div>
+                  )}
+                  <PredictionResult data={predictionData} patientPayload={patientPayload} />
+                </section>
+              </div>
             </div>
-            <button className="logout-button" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </header>
+          )}
 
-        <main className="app-main">
-          <section className="form-section">
-            <h2>Patient Information</h2>
-            <PatientForm onResult={handleResult} />
-          </section>
+          {currentPage === "history" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Prediction History</h1>
+                <p>View all past predictions and results</p>
+              </div>
+              <div className="history-placeholder">
+                <p>Prediction history coming soon...</p>
+              </div>
+            </div>
+          )}
 
-          <section className="results-section">
-            <h2>Prediction Results</h2>
-            {!predictionData && <p>Submit the form to see risk predictions.</p>}
-            <PredictionResult data={predictionData} patientPayload={patientPayload} />
-          </section>
+          {currentPage === "patients" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Patients</h1>
+                <p>Manage patient records and information</p>
+              </div>
+              <div className="patients-placeholder">
+                <p>Patient management coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "reports" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Reports</h1>
+                <p>View and download prediction reports</p>
+              </div>
+              <div className="reports-placeholder">
+                <p>Reports coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "analytics" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Analytics</h1>
+                <p>System analytics and statistics</p>
+              </div>
+              <div className="analytics-placeholder">
+                <p>Analytics coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "explainable-ai" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Explainable AI (SHAP)</h1>
+                <p>Understand model predictions with SHAP explanations</p>
+              </div>
+              <div className="explainable-ai-placeholder">
+                <p>SHAP explanations coming soon...</p>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "analytics" && <Analytics />}
+          {currentPage === "reports" && <Reports />}
+          {currentPage === "history" && <History />}
+          {currentPage === "patients" && <Patients />}
+
+          {currentPage === "settings" && (
+            <div className="page-container">
+              <div className="page-header">
+                <h1>Settings</h1>
+                <p>System settings and configuration</p>
+              </div>
+              <div className="settings-placeholder">
+                <p>Settings coming soon...</p>
+              </div>
+            </div>
+          )}
         </main>
-
-        <footer className="app-footer">
-          <p>
-            <strong>Disclaimer:</strong> This tool is for educational/demonstration purposes
-            only and is not a substitute for professional medical advice, diagnosis, or
-            treatment.
-          </p>
-        </footer>
       </div>
     </ProtectedRoute>
   );

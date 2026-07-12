@@ -1,84 +1,168 @@
 /**
  * api.js
  * ------
- * Axios instance configured for the Flask backend, plus wrapper functions
- * for /predict, /explain, and /report endpoints.
+ * Axios instance using the React proxy (no CORS in dev).
+ * All requests are relative; the proxy forwards to http://localhost:5000.
+ * Includes JWT interceptor and 401 handling.
  */
+
 import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "",  // empty = relative URLs, use proxy
   headers: { "Content-Type": "application/json" },
-  timeout: 60000,   // 60 s — PDF generation can take ~10-20 s
+  timeout: 90000,
 });
 
-/**
- * Run risk prediction for one or more diseases.
- * @param {object} patient  – PatientData fields
- * @param {string[]} [diseases] – optional subset
- * @returns {Promise<object>} { results, errors? }
- */
-export async function predictDisease(patient, diseases = undefined) {
+// ---- Request interceptor: attach JWT token ----
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ---- Response interceptor: handle 401 ----
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      if (!window.location.pathname.includes("/signin")) {
+        window.location.href = "/signin";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ============================================================
+//  AUTH
+// ============================================================
+export const login = (username, password) =>
+  apiClient.post("/auth/login", { username, password });
+
+export const register = (username, email, password) =>
+  apiClient.post("/auth/register", { username, email, password });
+
+// ============================================================
+//  PREDICT
+// ============================================================
+export const predictDisease = (patient, diseases) => {
   const body = diseases ? { patient, diseases } : { patient };
-  const response = await apiClient.post("/predict", body);
-  return response.data;
-}
+  return apiClient.post("/predict", body).then(res => res.data);
+};
 
-/**
- * Get SHAP explanation for a single disease prediction.
- * @param {string} disease     – "diabetes" | "heart" | "hypertension"
- * @param {object} patient     – PatientData fields
- * @param {string} [modelType] – "random_forest" (default) | "logistic_regression" | "ann"
- * @returns {Promise<object>}
- */
-export async function explainDisease(disease, patient, modelType = "random_forest") {
-  const response = await apiClient.post(`/explain/${disease}`, {
-    patient,
-    model_type: modelType,
-  });
-  return response.data;
-}
+// ============================================================
+//  EXPLAIN (SHAP)
+// ============================================================
+export const explainDisease = (disease, patient, modelType = "random_forest") =>
+  apiClient.post(`/explain/${disease}`, { patient, model_type: modelType })
+    .then(res => res.data);
 
-/**
- * Request a PDF risk report from the server.
- *
- * The backend renders a Jinja2 template with SHAP charts and converts it to
- * PDF via WeasyPrint.  If WeasyPrint is not available on the server the
- * response is an HTML file instead (same filename convention, .html suffix).
- *
- * @param {object} patient      – PatientData fields (same as /predict)
- * @param {object} predictions  – pre-computed /predict response body
- * @param {string} [modelType]  – SHAP model type (default "random_forest")
- * @param {string[]} [diseases] – optional subset of diseases to include
- * @returns {Promise<{blob: Blob, filename: string}>}
- */
-export async function downloadReport(
-  patient,
-  predictions = undefined,
-  modelType = "random_forest",
-  diseases = undefined
-) {
+// ============================================================
+//  REPORT
+// ============================================================
+export const downloadReport = async (patient, predictions, modelType = "random_forest", diseases) => {
   const body = { patient, model_type: modelType };
   if (predictions) body.predictions = predictions;
-  if (diseases)    body.diseases    = diseases;
+  if (diseases) body.diseases = diseases;
 
-  const response = await apiClient.post("/report", body, {
+  const response = await apiClient.post("/api/reports/report", body, {
     responseType: "blob",
-    timeout: 90000,   // PDF generation can be slow on first call (model load)
+    timeout: 90000,
   });
 
-  // Derive filename from Content-Disposition header, fallback to timestamp
   const disposition = response.headers["content-disposition"] || "";
-  const nameMatch   = disposition.match(/filename="?([^";\n]+)"?/i);
+  const nameMatch = disposition.match(/filename="?([^";\n]+)"?/i);
   const contentType = response.headers["content-type"] || "";
-  const ext         = contentType.includes("pdf") ? "pdf" : "html";
-  const filename    = nameMatch
-    ? nameMatch[1]
-    : `disease_risk_report_${Date.now()}.${ext}`;
+  const ext = contentType.includes("pdf") ? "pdf" : "html";
+  const filename = nameMatch ? nameMatch[1] : `disease_risk_report_${Date.now()}.${ext}`;
 
   return { blob: response.data, filename };
-}
+};
 
+// ============================================================
+//  DASHBOARD
+// ============================================================
+export const getDashboardMetrics = () =>
+  apiClient.get("/api/dashboard/metrics").then(res => res.data);
+
+export const getDailyPredictions = () =>
+  apiClient.get("/api/dashboard/daily-predictions").then(res => res.data);
+
+export const getDiseaseDistribution = () =>
+  apiClient.get("/api/dashboard/disease-distribution").then(res => res.data);
+
+export const getRiskDistribution = () =>
+  apiClient.get("/api/dashboard/risk-distribution").then(res => res.data);
+
+export const getMonthlyAccuracy = () =>
+  apiClient.get("/api/dashboard/monthly-accuracy").then(res => res.data);
+
+export const getRecentPredictions = (limit = 10, offset = 0) =>
+  apiClient.get(`/api/dashboard/recent-predictions?limit=${limit}&offset=${offset}`)
+    .then(res => res.data);
+
+// ============================================================
+//  ANALYTICS
+// ============================================================
+export const getAnalyticsSummary = () =>
+  apiClient.get("/api/analytics/summary").then(res => res.data);
+
+export const getPredictionsByDate = (days = 30) =>
+  apiClient.get(`/api/analytics/predictions-by-date?days=${days}`).then(res => res.data);
+
+export const getModelPerformance = () =>
+  apiClient.get("/api/analytics/model-performance").then(res => res.data);
+
+export const getAnalyticsRiskDistribution = () =>
+  apiClient.get("/api/analytics/risk-distribution").then(res => res.data);
+
+export const getAgeGroupAnalysis = () =>
+  apiClient.get("/api/analytics/age-group-analysis").then(res => res.data);
+
+// ============================================================
+//  PATIENTS
+// ============================================================
+export const getPatients = (limit = 20, offset = 0, search = "") => {
+  const params = new URLSearchParams({ limit, offset });
+  if (search) params.append("search", search);
+  return apiClient.get(`/api/patients/?${params.toString()}`).then(res => res.data);
+};
+
+export const createPatient = (data) =>
+  apiClient.post("/api/patients/", data).then(res => res.data);
+
+export const updatePatient = (id, data) =>
+  apiClient.put(`/api/patients/${id}`, data).then(res => res.data);
+
+export const deletePatient = (id) =>
+  apiClient.delete(`/api/patients/${id}`).then(res => res.data);
+
+// ============================================================
+//  HISTORY (Prediction Logs)
+// ============================================================
+export const getPredictionHistory = (limit = 20, offset = 0, disease = "") => {
+  const params = new URLSearchParams({ limit, offset });
+  if (disease) params.append("disease", disease);
+  return apiClient.get(`/predict/history?${params.toString()}`).then(res => res.data);
+};
+
+// ============================================================
+//  REPORTS LIST
+// ============================================================
+export const listReports = (limit = 50, offset = 0) =>
+  apiClient.get(`/api/reports/?limit=${limit}&offset=${offset}`).then(res => res.data);
+
+// ============================================================
+//  DEFAULT EXPORT
+// ============================================================
 export default apiClient;

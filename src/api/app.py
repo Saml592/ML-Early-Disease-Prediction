@@ -20,6 +20,9 @@ from src.api.routes.explain import explain_bp
 from src.api.routes.predict import predict_bp
 from src.api.routes.report import report_bp
 from src.api.routes.auth import auth_bp
+from src.api.routes.dashboard import dashboard_bp
+from src.api.routes.patients import patients_bp
+from src.api.routes.analytics import analytics_bp
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -38,10 +41,13 @@ def create_app() -> Flask:
     )
     CORS(app)  # allow all origins; restrict via env config in production
 
-    app.register_blueprint(predict_bp)
+    app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(explain_bp)
-    app.register_blueprint(report_bp)
+    app.register_blueprint(report_bp, url_prefix="/api/reports")
     app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(patients_bp)
+    app.register_blueprint(analytics_bp)
 
     @app.route("/health", methods=["GET"])
     def health():
