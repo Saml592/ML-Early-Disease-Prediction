@@ -39,7 +39,9 @@ def create_app() -> Flask:
         template_folder=_TEMPLATE_FOLDER,
         static_folder=_STATIC_FOLDER,
     )
-    CORS(app)  # allow all origins; restrict via env config in production
+    CORS(
+        app, origins=["https://ml-early-disease-prediction.vercel.app"]
+    )  # allow all origins; restrict via env config in production
 
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(explain_bp)
