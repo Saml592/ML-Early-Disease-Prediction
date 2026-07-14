@@ -16,6 +16,8 @@ import Analytics from "./pages/Analytics";
 import Reports from "./pages/Reports";
 import History from "./pages/History";
 import Patients from "./pages/Patients";
+import ExplainableAI from "./pages/ExplainableAI";
+import Settings from "./pages/Settings";
 import PatientForm from "./components/PatientForm";
 import PredictionResult from "./components/PredictionResult";
 import "./styles/App.css";
@@ -112,7 +114,7 @@ export default function App() {
                 <p>View all past predictions and results</p>
               </div>
               <div className="history-placeholder">
-                <p>Prediction history coming soon...</p>
+                <p>Prediction history </p>
               </div>
             </div>
           )}
@@ -124,7 +126,7 @@ export default function App() {
                 <p>Manage patient records and information</p>
               </div>
               <div className="patients-placeholder">
-                <p>Patient management coming soon...</p>
+                <p>Patient management </p>
               </div>
             </div>
           )}
@@ -136,7 +138,7 @@ export default function App() {
                 <p>View and download prediction reports</p>
               </div>
               <div className="reports-placeholder">
-                <p>Reports coming soon...</p>
+                <p>Reports</p>
               </div>
             </div>
           )}
@@ -148,7 +150,7 @@ export default function App() {
                 <p>System analytics and statistics</p>
               </div>
               <div className="analytics-placeholder">
-                <p>Analytics coming soon...</p>
+                <p>Analytics</p>
               </div>
             </div>
           )}
@@ -160,7 +162,7 @@ export default function App() {
                 <p>Understand model predictions with SHAP explanations</p>
               </div>
               <div className="explainable-ai-placeholder">
-                <p>SHAP explanations coming soon...</p>
+                <p>SHAP explanations</p>
               </div>
             </div>
           )}
@@ -169,18 +171,20 @@ export default function App() {
           {currentPage === "reports" && <Reports />}
           {currentPage === "history" && <History />}
           {currentPage === "patients" && <Patients />}
+          {currentPage === "explainable-ai" && <ExplainableAI />}
+          {currentPage === "settings" && <Settings />}
 
-          {currentPage === "settings" && (
+          {/* {currentPage === "settings" && (
             <div className="page-container">
               <div className="page-header">
                 <h1>Settings</h1>
                 <p>System settings and configuration</p>
               </div>
               <div className="settings-placeholder">
-                <p>Settings coming soon...</p>
+                <p> </p>
               </div>
             </div>
-          )}
+          )} */}
         </main>
       </div>
     </ProtectedRoute>

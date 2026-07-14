@@ -144,7 +144,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
 
       <div className="sidebar-footer">
         <div className="sidebar-info">
-          <p>Hospital Management System</p>
+          <p>MediAI Management System</p>
           <span>v1.0</span>
         </div>
       </div>

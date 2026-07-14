@@ -1,0 +1,144 @@
+.settings-page {
+  padding: 2rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.settings-tabs button {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  background: transparent;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.settings-tabs button:hover {
+  background: #e2e8f0;
+}
+
+.settings-tabs button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.settings-card {
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  max-width: 500px;
+}
+
+.settings-card h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.settings-card form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.settings-card form input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  margin-top: 0.2rem;
+}
+
+.settings-card button[type="submit"] {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.settings-card button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-message {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.settings-message.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.settings-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.theme-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.settings-note {
+  margin-top: 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Dark Mode support (basic) */
+body.dark-mode .settings-page {
+  background: #1a202c;
+}
+
+body.dark-mode .settings-card {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+body.dark-mode .settings-card input {
+  background: #4a5568;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+body.dark-mode .settings-tabs button {
+  color: #a0aec0;
+}
+
+body.dark-mode .settings-tabs button:hover {
+  background: #4a5568;
+}
+
+body.dark-mode .settings-tabs button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+body.dark-mode .settings-message.success {
+  background: #276749;
+  color: #d1fae5;
+}
+
+body.dark-mode .settings-message.error {
+  background: #742a2a;
+  color: #fecaca;
+}

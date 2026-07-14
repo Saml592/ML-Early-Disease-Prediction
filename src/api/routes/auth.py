@@ -8,6 +8,8 @@ Routes:
   POST /auth/login - Login user (returns JWT token)
   POST /auth/logout - Logout user (client-side token removal)
   GET /auth/me - Get current user info (requires token)
+  PUT /auth/profile - Update user profile (username/email)
+  PUT /auth/password - Change user password
 """
 
 from flask import Blueprint, jsonify, request
@@ -32,6 +34,7 @@ JWT_EXPIRATION_HOURS = 24
 
 class RegisterRequest(BaseModel):
     """Validation schema for user registration."""
+
     username: str
     email: EmailStr
     password: str
@@ -41,22 +44,20 @@ class RegisterRequest(BaseModel):
             "example": {
                 "username": "Sam_mag",
                 "email": "Saml@example.com",
-                "password": "SecurePassword123!"
+                "password": "SecurePassword123!",
             }
         }
 
 
 class LoginRequest(BaseModel):
     """Validation schema for user login."""
+
     username: str
     password: str
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "username": "Sam_mag",
-                "password": "SecurePassword123!"
-            }
+            "example": {"username": "Sam_mag", "password": "SecurePassword123!"}
         }
 
 
@@ -124,9 +125,11 @@ def register():
         db = SessionLocal()
         try:
             # Check if user already exists
-            existing_user = db.query(User).filter(
-                (User.username == req.username) | (User.email == req.email)
-            ).first()
+            existing_user = (
+                db.query(User)
+                .filter((User.username == req.username) | (User.email == req.email))
+                .first()
+            )
 
             if existing_user:
                 return jsonify({"error": "Username or email already exists"}), 409
@@ -195,15 +198,20 @@ def login():
             # Generate JWT token
             token = create_jwt_token(user.id, user.username)
 
-            return jsonify({
-                "message": "Login successful",
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                },
-                "token": token,
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "message": "Login successful",
+                        "user": {
+                            "id": user.id,
+                            "username": user.username,
+                            "email": user.email,
+                        },
+                        "token": token,
+                    }
+                ),
+                200,
+            )
 
         except Exception as e:
             logger.error(f"Login error: {e}")
@@ -238,17 +246,147 @@ def get_me():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        return jsonify({
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "created_at": user.created_at.isoformat(),
-            }
-        }), 200
+        return (
+            jsonify(
+                {
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                        "created_at": user.created_at.isoformat(),
+                    }
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logger.error(f"Error fetching user: {e}")
         return jsonify({"error": "Failed to fetch user"}), 500
     finally:
         db.close()
+
+
+# -------------------------------------------------------------------------
+# NEW ROUTES – PROFILE & PASSWORD (placed OUTSIDE the get_me function)
+# -------------------------------------------------------------------------
+
+
+@auth_bp.route("/profile", methods=["PUT"])
+def update_profile():
+    """Update user profile (username and/or email)."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request body required"}), 400
+
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.id == current_user["user_id"]).first()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
+            new_username = data.get("username")
+            new_email = data.get("email")
+
+            if new_username:
+                # Check if username already taken (by another user)
+                existing = (
+                    db.query(User)
+                    .filter(User.username == new_username, User.id != user.id)
+                    .first()
+                )
+                if existing:
+                    return jsonify({"error": "Username already taken"}), 409
+                user.username = new_username
+
+            if new_email:
+                existing = (
+                    db.query(User)
+                    .filter(User.email == new_email, User.id != user.id)
+                    .first()
+                )
+                if existing:
+                    return jsonify({"error": "Email already in use"}), 409
+                user.email = new_email
+
+            db.commit()
+            db.refresh(user)
+
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "user": {
+                            "id": user.id,
+                            "username": user.username,
+                            "email": user.email,
+                        },
+                    }
+                ),
+                200,
+            )
+
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Update profile error: {e}")
+            return jsonify({"error": "Update failed"}), 500
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Unexpected error in update_profile: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@auth_bp.route("/password", methods=["PUT"])
+def change_password():
+    """Change user password."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request body required"}), 400
+
+        old_password = data.get("old_password")
+        new_password = data.get("new_password")
+
+        if not old_password or not new_password:
+            return jsonify({"error": "Both old and new password are required"}), 400
+
+        if len(new_password) < 6:
+            return jsonify({"error": "New password must be at least 6 characters"}), 400
+
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.id == current_user["user_id"]).first()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
+            if not user.check_password(old_password):
+                return jsonify({"error": "Invalid current password"}), 401
+
+            user.set_password(new_password)
+            db.commit()
+            return (
+                jsonify({"success": True, "message": "Password updated successfully"}),
+                200,
+            )
+
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Change password error: {e}")
+            return jsonify({"error": "Password change failed"}), 500
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Unexpected error in change_password: {e}")
+        return jsonify({"error": "Internal server error"}), 500

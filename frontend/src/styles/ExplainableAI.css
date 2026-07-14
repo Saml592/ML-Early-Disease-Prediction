@@ -1,0 +1,138 @@
+.explainable-ai-page {
+  padding: 2rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.explainable-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.explainable-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.explainable-form fieldset {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.explainable-form legend {
+  font-weight: 600;
+  padding: 0 0.5rem;
+}
+
+.explainable-form label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-weight: 500;
+}
+
+.explainable-form input,
+.explainable-form select {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+
+.explainable-form .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.explainable-form .checkbox-label input {
+  width: auto;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.form-actions button {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.form-actions button[type="submit"] {
+  background: #3b82f6;
+  color: white;
+}
+
+.form-actions button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-actions button[type="button"] {
+  background: #e5e7eb;
+  color: #1e293b;
+}
+
+.explainable-results {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.explanation-container h3 {
+  margin-top: 0;
+}
+
+.explanation-container p {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.feature-table {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.feature-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.feature-table th,
+.feature-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.feature-table th {
+  background: #f1f5f9;
+}
+
+@media (max-width: 768px) {
+  .explainable-layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -156,6 +156,14 @@ export const getPredictionHistory = (limit = 20, offset = 0, disease = "") => {
   return apiClient.get(`/predict/history?${params.toString()}`).then(res => res.data);
 };
 
+// ---- Profile & Password ----
+export const updateProfile = (username, email) =>
+  apiClient.put("/auth/profile", { username, email }).then(res => res.data);
+
+export const changePassword = (oldPassword, newPassword) =>
+  apiClient.put("/auth/password", { old_password: oldPassword, new_password: newPassword })
+    .then(res => res.data);
+
 // ============================================================
 //  REPORTS LIST
 // ============================================================
