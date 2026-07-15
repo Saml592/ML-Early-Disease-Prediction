@@ -9,12 +9,12 @@
 import axios from "axios";
 
 
+const baseURL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
 const apiClient = axios.create({
- baseURL: process.env.REACT_APP_API_URL || "",
+  baseURL,
   headers: { "Content-Type": "application/json" },
   timeout: 90000,
 });
-
 // ---- Request interceptor: attach JWT token ----
 apiClient.interceptors.request.use(
   (config) => {
