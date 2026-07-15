@@ -5,8 +5,8 @@
  */
 
 import React, { useState } from "react";
-import axios from "axios";
 import "./Auth.css";
+import { login } from "../api"; // ✅ imported, now used
 
 export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
   const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
       ...prev,
       [name]: value,
     }));
-    setError(""); // Clear error on input change
+    setError("");
   };
 
   const validateForm = () => {
@@ -49,26 +49,20 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
     setError("");
 
     try {
-      const response = await axios.post("/auth/login", {
-        username: formData.username,
-        password: formData.password,
-      });
+      const data = await login(formData.username, formData.password);
 
-      // Store token in localStorage
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       setFormData({
         username: "",
         password: "",
       });
 
-      // Call callback if provided
       if (onSignInSuccess) {
-        onSignInSuccess(response.data.user);
+        onSignInSuccess(data.user);
       }
 
-      // Redirect to dashboard
       window.location.href = "/";
     } catch (err) {
       if (err.response?.data?.error) {
@@ -130,20 +124,20 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
         </form>
 
         <div className="auth-footer">
-  <p>
-    Don't have an account?{" "}
-   <button
-  type="button"
-  onClick={() => {
-    console.log("Button clicked!"); // <-- Add this log
-    onSwitchToSignUp();             // <-- Call the prop
-  }}
-  className="link-button"
->
-  Create one now
-</button>
-  </p>
-</div>
+          <p>
+            Don't have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                console.log("Button clicked!");
+                onSwitchToSignUp();
+              }}
+              className="link-button"
+            >
+              Create one now
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

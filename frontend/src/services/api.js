@@ -59,12 +59,17 @@ apiClient.interceptors.response.use(
 // ============================================================
 //  AUTH
 // ============================================================
+// ... other code ...
+
 export const login = (username, password) =>
-  apiClient.post("/auth/login", { username, password });
+  apiClient.post("/auth/login", { username, password })
+    .then(res => res.data);
 
 export const register = (username, email, password) =>
-  apiClient.post("/auth/register", { username, email, password });
+  apiClient.post("/auth/register", { username, email, password })
+    .then(res => res.data);
 
+// ... the rest remains the same ...
 // ============================================================
 //  PREDICT
 // ============================================================

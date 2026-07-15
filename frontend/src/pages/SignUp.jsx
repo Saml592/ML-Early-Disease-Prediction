@@ -5,8 +5,9 @@
  */
 
 import React, { useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import "./Auth.css";
+import { register } from "../api";
 
 export default function SignUp({ onSignUpSuccess, onSwitchToSignIn }) {
   const [formData, setFormData] = useState({
@@ -63,61 +64,57 @@ export default function SignUp({ onSignUpSuccess, onSwitchToSignIn }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) {
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    // ✅ USE THE IMPORTED register FUNCTION
+    const data = await register(
+      formData.username,
+      formData.email,
+      formData.password
+    );
+
+    // data = { message, user, token }
+    localStorage.setItem("authToken", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    setSuccess(true);
+    setFormData({
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+
+    if (onSignUpSuccess) {
+      onSignUpSuccess(data.user);
     }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await axios.post("/auth/register", {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-      });
-
-      // Store token in localStorage
-      localStorage.setItem("authToken", response.data.token);
-    localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      setSuccess(true);
-      setFormData({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
-        
-
-      // Call callback if provided
-      if (onSignUpSuccess) {
-        onSignUpSuccess(response.data.user);
-      }
-
-      // Redirect after success
-      setTimeout(() => {
-    // Clear the token so the user is NOT auto-logged in
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-    
-    // Redirect to sign-in page
-    window.location.href = "/signin";
+    setTimeout(() => {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      window.location.href = "/signin";
     }, 1500);
-    } catch (err) {
-      if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else if (err.response?.data?.details) {
-        setError(err.response.data.details[0]?.msg || "Registration failed");
-      } else {
-        setError("Registration failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+  } catch (err) {
+    // err is the error object from Axios
+    if (err.response?.data?.error) {
+      setError(err.response.data.error);
+    } else if (err.response?.data?.details) {
+      setError(err.response.data.details[0]?.msg || "Registration failed");
+    } else {
+      setError("Registration failed. Please try again.");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (success) {
     return (
