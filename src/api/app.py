@@ -1,3 +1,4 @@
+# FORCE NEW DEPLOY - 2026-07-15 20:10
 """
 app.py
 ------
@@ -7,7 +8,7 @@ Flask app factory for the Disease Prediction API.
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
 
 from src.api.database import init_db
 from src.api.routes.explain import explain_bp
@@ -24,8 +25,6 @@ logger = get_logger(__name__)
 _HERE = os.path.dirname(__file__)
 _TEMPLATE_FOLDER = os.path.join(_HERE, "templates")
 _STATIC_FOLDER = os.path.join(_HERE, "static")
-
-db = SQLAlchemy()
 
 
 def create_app() -> Flask:
@@ -48,16 +47,9 @@ def create_app() -> Flask:
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # Initialize SQLAlchemy with the app
-    db.init_app(app)
-
-    # Create tables (if needed) – this is optional if init_db() handles it
-    with app.app_context():
-        try:
-            db.create_all()
-            logger.info("Database tables created/verified via SQLAlchemy.")
-        except Exception as e:
-            logger.error(f"Error creating tables: {e}")
+    # Initialize SQLAlchemy – we use `db` globally, so we attach it
+    # The db object is already defined above; we'll use SQLAlchemy(app) later if needed.
+    # But to keep it simple, we'll just call init_db() which handles everything.
 
     # ---------- CORS ----------
     allowed_env = os.environ.get("ALLOWED_ORIGINS", "")
@@ -77,7 +69,7 @@ def create_app() -> Flask:
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(explain_bp)
     app.register_blueprint(report_bp, url_prefix="/api/reports")
-    app.register_blueprint(auth_bp)  # only once
+    app.register_blueprint(auth_bp)  # ONLY ONCE
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
@@ -96,13 +88,10 @@ def create_app() -> Flask:
         logger.exception("Unhandled server error")
         return jsonify({"error": "Internal server error"}), 500
 
-    # Call your existing init_db() if it does additional setup
+    # Initialize database (tables, etc.)
     with app.app_context():
-        try:
-            init_db()
-            logger.info("Database initialized via init_db().")
-        except Exception as e:
-            logger.error(f"init_db() failed: {e}")
+        init_db()
+        logger.info("Database initialised.")
 
     return app
 
