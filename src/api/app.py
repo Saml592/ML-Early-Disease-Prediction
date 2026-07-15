@@ -39,10 +39,27 @@ def create_app() -> Flask:
         template_folder=_TEMPLATE_FOLDER,
         static_folder=_STATIC_FOLDER,
     )
-    CORS(
-        app, origins=["https://ml-early-disease-prediction.vercel.app"]
-    )  # allow all origins; restrict via env config in production
 
+    # -------- CORS configuration (environment-aware) --------
+    # Read allowed origins from environment variable, e.g.:
+    #   ALLOWED_ORIGINS=https://ml-early-disease-prediction.vercel.app,https://my-preview.vercel.app
+    # If not set, fallback to production + local development.
+    allowed_env = os.environ.get("ALLOWED_ORIGINS", "")
+    if allowed_env:
+        allowed_origins = [
+            origin.strip() for origin in allowed_env.split(",") if origin.strip()
+        ]
+    else:
+        # Default: production frontend + local React dev server
+        allowed_origins = [
+            "https://ml-early-disease-prediction.vercel.app",
+            "http://localhost:3000",
+        ]
+
+    CORS(app, origins=allowed_origins)
+    logger.info(f"CORS allowed origins: {allowed_origins}")
+
+    # -------- Register blueprints --------
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(explain_bp)
     app.register_blueprint(report_bp, url_prefix="/api/reports")
