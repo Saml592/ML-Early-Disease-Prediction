@@ -25,6 +25,7 @@ from src.api.routes.patients import patients_bp
 from src.api.routes.analytics import analytics_bp
 from src.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 # Absolute paths so Flask finds templates/static regardless of CWD
@@ -67,6 +68,7 @@ def create_app() -> Flask:
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(auth_bp)
 
     @app.route("/health", methods=["GET"])
     def health():
