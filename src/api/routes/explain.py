@@ -10,6 +10,7 @@ Defaults to explaining the Random Forest model (TreeExplainer is exact and
 fast); pass "model_type": "logistic_regression" or "ann" to explain those
 instead.
 """
+# from src.explainability.shap_explainer import explain_prediction
 
 from flask import Blueprint, jsonify, request
 from pydantic import ValidationError
