@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 import "./Auth.css";
-import { login } from "../api"; // ✅ imported, now used
+import { login } from "../services/api"; // ✅ imported, now used
 
 export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
   const [formData, setFormData] = useState({

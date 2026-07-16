@@ -7,7 +7,7 @@
 import React, { useState } from "react";
 // import axios from "axios";
 import "./Auth.css";
-import { register } from "../api";
+import { register } from "../services/api";
 
 export default function SignUp({ onSignUpSuccess, onSwitchToSignIn }) {
   const [formData, setFormData] = useState({

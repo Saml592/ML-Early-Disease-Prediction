@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "api": ["./src/services/api"],
+      "api/*": ["./src/services/api/*"]
+    }
+  },
+  "include": ["src"]
+}
