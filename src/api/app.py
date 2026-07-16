@@ -1,22 +1,19 @@
-# FORCE NEW DEPLOY - 2026-07-15 20:10
-"""
-app.py
-------
-Flask app factory for the Disease Prediction API.
-"""
-
 import os
-from flask import Flask, jsonify, request  # <-- import request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-
 from src.api.database import init_db
-from src.api.routes.explain import explain_bp
+
+# Import only the blueprints that exist and work
 from src.api.routes.predict import predict_bp
 from src.api.routes.report import report_bp
 from src.api.routes.auth import auth_bp
 from src.api.routes.dashboard import dashboard_bp
 from src.api.routes.patients import patients_bp
 from src.api.routes.analytics import analytics_bp
+
+# DO NOT import explain_bp – it's broken/missing
+# We'll skip it for now to get the app running.
+
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -28,12 +25,10 @@ _STATIC_FOLDER = os.path.join(_HERE, "static")
 
 def create_app() -> Flask:
     app = Flask(
-        __name__,
-        template_folder=_TEMPLATE_FOLDER,
-        static_folder=_STATIC_FOLDER,
+        __name__, template_folder=_TEMPLATE_FOLDER, static_folder=_STATIC_FOLDER
     )
 
-    # ---------- Database configuration ----------
+    # ---------- Database ----------
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         logger.warning("DATABASE_URL not set, falling back to SQLite")
@@ -41,15 +36,14 @@ def create_app() -> Flask:
     else:
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
-
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # ---------- CORS configuration (robust) ----------
-    allowed_env = os.environ.get("ALLOWED_ORIGINS", "")
-    if allowed_env:
+    # ---------- CORS (with fallback) ----------
+    allowed_origins = os.environ.get("ALLOWED_ORIGINS", "")
+    if allowed_origins:
         allowed_origins = [
-            origin.strip() for origin in allowed_env.split(",") if origin.strip()
+            origin.strip() for origin in allowed_origins.split(",") if origin.strip()
         ]
     else:
         allowed_origins = [
@@ -57,7 +51,6 @@ def create_app() -> Flask:
             "http://localhost:3000",
         ]
 
-    # Use Flask-CORS with explicit options for preflight
     CORS(
         app,
         origins=allowed_origins,
@@ -67,9 +60,8 @@ def create_app() -> Flask:
         expose_headers=["Content-Disposition", "Content-Type"],
         max_age=3600,
     )
-    logger.info(f"CORS allowed origins: {allowed_origins}")
 
-    # Manual fallback to ensure headers are always set, especially for OPTIONS
+    # FALLBACK – ensures headers are ALWAYS set
     @app.after_request
     def after_request(response):
         origin = request.headers.get("Origin")
@@ -87,14 +79,15 @@ def create_app() -> Flask:
 
     # ---------- Blueprints ----------
     app.register_blueprint(predict_bp, url_prefix="/predict")
-    app.register_blueprint(explain_bp)
     app.register_blueprint(report_bp, url_prefix="/api/reports")
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
 
-    # ---------- Routes ----------
+    # DO NOT register explain_bp – it's missing its dependency
+    # If you need it later, fix shap_explainer.py first.
+
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({"status": "ok"}), 200
@@ -108,11 +101,9 @@ def create_app() -> Flask:
         logger.exception("Unhandled server error")
         return jsonify({"error": "Internal server error"}), 500
 
-    # Initialize database (tables, etc.)
     with app.app_context():
         init_db()
         logger.info("Database initialised.")
-
     return app
 
 
