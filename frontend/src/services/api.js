@@ -5,12 +5,27 @@
  * All requests are relative; the proxy forwards to http://localhost:5000.
  * Includes JWT interceptor and 401 handling.
  */
-
+// FORCE NEW BUILD - 2026-07-15
+// FORCE DEPLOY – 2026-07-15 20:30
 import axios from "axios";
 
 
+// const baseURL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
+// const baseURL = "https://ml-early-disease-prediction.onrender.com";
+// console.log("🔍 [HARDCODED] API Base URL:", baseURL);
+// console.log("🔍 REACT_APP_API_BASE_URL:", process.env.REACT_APP_API_BASE_URL);
+// const apiClient = axios.create({
+//   baseURL,
+//   headers: { "Content-Type": "application/json" },
+//   timeout: 90000,
+// });
+
+// Temporary hardcode – will work immediately
+const baseURL = "https://ml-early-disease-prediction.onrender.com";
+console.log("🔍 API Base URL (hardcoded):", baseURL);
+
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || "",
+  baseURL,
   headers: { "Content-Type": "application/json" },
   timeout: 90000,
 });
@@ -45,12 +60,17 @@ apiClient.interceptors.response.use(
 // ============================================================
 //  AUTH
 // ============================================================
+// ... other code ...
+
 export const login = (username, password) =>
-  apiClient.post("/auth/login", { username, password });
+  apiClient.post("/auth/login", { username, password })
+    .then(res => res.data);
 
 export const register = (username, email, password) =>
-  apiClient.post("/auth/register", { username, email, password });
+  apiClient.post("/auth/register", { username, email, password })
+    .then(res => res.data);
 
+// ... the rest remains the same ...
 // ============================================================
 //  PREDICT
 // ============================================================

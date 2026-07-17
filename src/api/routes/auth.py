@@ -390,3 +390,8 @@ def change_password():
     except Exception as e:
         logger.error(f"Unexpected error in change_password: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+@auth_bp.route("/test", methods=["GET"])
+def test():
+    return jsonify({"message": "Auth blueprint is alive!"}), 200

@@ -23,7 +23,7 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
       ...prev,
       [name]: value,
     }));
-    setError(""); // Clear error on input change
+    setError("");
   };
 
   const validateForm = () => {
@@ -54,7 +54,6 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
         password: formData.password,
       });
 
-      // Store token in localStorage
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
@@ -63,12 +62,10 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
         password: "",
       });
 
-      // Call callback if provided
       if (onSignInSuccess) {
         onSignInSuccess(response.data.user);
       }
 
-      // Redirect to dashboard
       window.location.href = "/";
     } catch (err) {
       if (err.response?.data?.error) {
@@ -84,7 +81,6 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
   return (
     <div className="auth-container">
       <div className="auth-card">
-        {/* ---- Back to Home button ---- */}
         <div className="auth-back">
           <button
             type="button"
@@ -145,9 +141,7 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
             Don't have an account?{" "}
             <button
               type="button"
-              onClick={() => {
-                onSwitchToSignUp();
-              }}
+              onClick={() => onSwitchToSignUp()}
               className="link-button"
             >
               Create one now
