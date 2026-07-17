@@ -10,22 +10,8 @@
 import axios from "axios";
 
 
-// const baseURL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
-// const baseURL = "https://ml-early-disease-prediction.onrender.com";
-// console.log("🔍 [HARDCODED] API Base URL:", baseURL);
-// console.log("🔍 REACT_APP_API_BASE_URL:", process.env.REACT_APP_API_BASE_URL);
-// const apiClient = axios.create({
-//   baseURL,
-//   headers: { "Content-Type": "application/json" },
-//   timeout: 90000,
-// });
-
-// Temporary hardcode – will work immediately
-const baseURL = "https://ml-early-disease-prediction.onrender.com";
-console.log("🔍 API Base URL (hardcoded):", baseURL);
-
 const apiClient = axios.create({
-  baseURL,
+  baseURL: "",   // ← must be empty!
   headers: { "Content-Type": "application/json" },
   timeout: 90000,
 });

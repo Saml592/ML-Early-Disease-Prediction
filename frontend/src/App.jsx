@@ -16,6 +16,7 @@ import Analytics from "./pages/Analytics";
 import Reports from "./pages/Reports";
 import History from "./pages/History";
 import Patients from "./pages/Patients";
+import LandingPage from "./pages/LandingPage";
 import ExplainableAI from "./pages/ExplainableAI";
 import Settings from "./pages/Settings";
 import PatientForm from "./components/PatientForm";
@@ -24,7 +25,7 @@ import "./styles/App.css";
 
 export default function App() {
   const { isAuthenticated, user, logout, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [currentPage, setCurrentPage] = useState("landing");
   const [predictionData, setPredictionData] = useState(null);
   const [patientPayload, setPatientPayload] = useState(null);
 
@@ -34,9 +35,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    logout();
-    window.location.href = "/signin";
-  };
+  logout();                  // clears localStorage and context state
+  setCurrentPage("signin");  // navigate to sign-in without reload
+};
 
   const handleSearch = (query) => {
     console.log("Search query:", query);
@@ -53,8 +54,16 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    // If the user explicitly wants to go to the sign-up page
+   if (!isAuthenticated) {
+    // Landing page is the default
+    if (currentPage === "landing") {
+      return (
+        <LandingPage
+          onGetStarted={() => setCurrentPage("signin")}
+        />
+      );
+    }
+    // Sign-up page
     if (currentPage === "signup") {
       return (
         <SignUp
@@ -65,11 +74,12 @@ export default function App() {
     }
     // Default: show sign-in page (with link to sign-up)
     return (
-      <SignIn
-        onSignInSuccess={() => setCurrentPage("dashboard")}
-        onSwitchToSignUp={() => setCurrentPage("signup")}
-      />
-    );
+  <SignIn
+    onSignInSuccess={() => setCurrentPage("dashboard")}
+    onSwitchToSignUp={() => setCurrentPage("signup")}
+    onSwitchToLanding={() => setCurrentPage("landing")}   // <-- add this
+  />
+);
   }
 
   // Authenticated Routes with Sidebar Layout

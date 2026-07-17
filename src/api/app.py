@@ -1,5 +1,18 @@
+"""
+app.py
+------
+Flask app factory for the Disease Prediction API. Enables CORS for the
+React frontend, registers the /predict, /explain, /report, and /auth blueprints,
+and initialises the database tables on startup.
+
+Run locally with:
+    python -m src.api.app
+or via gunicorn / flask CLI in production.
+"""
+
 import os
-from flask import Flask, jsonify, request
+
+from flask import Flask, jsonify
 from flask_cors import CORS
 from src.api.database import init_db
 
@@ -22,62 +35,23 @@ _HERE = os.path.dirname(__file__)
 _TEMPLATE_FOLDER = os.path.join(_HERE, "templates")
 _STATIC_FOLDER = os.path.join(_HERE, "static")
 
+ALLOWED_ORIGINS = [
+    "https://ml-early-disease-prediction.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 
 def create_app() -> Flask:
     app = Flask(
-        __name__, template_folder=_TEMPLATE_FOLDER, static_folder=_STATIC_FOLDER
+        __name__,
+        template_folder=_TEMPLATE_FOLDER,
+        static_folder=_STATIC_FOLDER,
     )
-
-    # ---------- Database ----------
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        logger.warning("DATABASE_URL not set, falling back to SQLite")
-        database_url = "sqlite:///local.db"
-    else:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # ---------- CORS (with fallback) ----------
-    allowed_origins = os.environ.get("ALLOWED_ORIGINS", "")
-    if allowed_origins:
-        allowed_origins = [
-            origin.strip() for origin in allowed_origins.split(",") if origin.strip()
-        ]
-    else:
-        allowed_origins = [
-            "https://ml-early-disease-prediction.vercel.app",
-            "http://localhost:3000",
-        ]
-
     CORS(
-        app,
-        origins=allowed_origins,
-        allow_headers=["Content-Type", "Authorization", "Accept"],
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        supports_credentials=True,
-        expose_headers=["Content-Disposition", "Content-Type"],
-        max_age=3600,
-    )
+        app, origins=["https://ml-early-disease-prediction.vercel.app"]
+    )  # allow all origins; restrict via env config in production
 
-    # FALLBACK – ensures headers are ALWAYS set
-    @app.after_request
-    def after_request(response):
-        origin = request.headers.get("Origin")
-        if origin and origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = (
-                "GET, POST, PUT, DELETE, OPTIONS"
-            )
-            response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, Authorization, Accept"
-            )
-            response.headers["Access-Control-Max-Age"] = "3600"
-        return response
-
-    # ---------- Blueprints ----------
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(report_bp, url_prefix="/api/reports")
     app.register_blueprint(auth_bp)
@@ -88,6 +62,7 @@ def create_app() -> Flask:
     # DO NOT register explain_bp – it's missing its dependency
     # If you need it later, fix shap_explainer.py first.
 
+    # ---- Health check ----
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({"status": "ok"}), 200

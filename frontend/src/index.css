@@ -43,3 +43,26 @@ body {
   background: white;
   border: 1px solid #e5e7eb;
 }
+
+/* Back to Home button */
+.auth-back {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.back-home-button {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.back-home-button:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
