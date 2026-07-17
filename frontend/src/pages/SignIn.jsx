@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./Auth.css";
 
-export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
+export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLanding }) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -84,6 +84,17 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        {/* ---- Back to Home button ---- */}
+        <div className="auth-back">
+          <button
+            type="button"
+            className="back-home-button"
+            onClick={onSwitchToLanding}
+          >
+            ← Back to Home
+          </button>
+        </div>
+
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to access your disease prediction dashboard</p>
@@ -130,20 +141,19 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp }) {
         </form>
 
         <div className="auth-footer">
-  <p>
-    Don't have an account?{" "}
-   <button
-  type="button"
-  onClick={() => {
-    console.log("Button clicked!"); // <-- Add this log
-    onSwitchToSignUp();             // <-- Call the prop
-  }}
-  className="link-button"
->
-  Create one now
-</button>
-  </p>
-</div>
+          <p>
+            Don't have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                onSwitchToSignUp();
+              }}
+              className="link-button"
+            >
+              Create one now
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

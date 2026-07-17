@@ -10,10 +10,9 @@ import { updateProfile, changePassword } from "../services/api";
 import "../styles/Settings.css";
 
 export default function Settings() {
-  const { user, login } = useAuth(); // removed 'logout' – it was unused
+  const { user, login } = useAuth(); // <-- make sure login exists
   const [activeTab, setActiveTab] = useState("profile");
 
-  // ---- Profile state ----
   const [profileData, setProfileData] = useState({
     username: "",
     email: "",
@@ -21,7 +20,6 @@ export default function Settings() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMessage, setProfileMessage] = useState({ text: "", type: "" });
 
-  // ---- Password state ----
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
     newPassword: "",
@@ -30,12 +28,10 @@ export default function Settings() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState({ text: "", type: "" });
 
-  // ---- Theme state (localStorage) ----
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
 
-  // Populate profile form when user changes
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -45,16 +41,14 @@ export default function Settings() {
     }
   }, [user]);
 
-  // ---- Apply theme class to body ----
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add("dark-mode");
     } else {
       document.body.classList.remove("dark-mode");
     }
-  }, [darkMode]); // <-- added dependency
+  }, [darkMode]);
 
-  // ---- Theme toggle ----
   const toggleTheme = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -68,12 +62,34 @@ export default function Settings() {
     setProfileMessage({ text: "", type: "" });
 
     try {
+      console.log("Updating profile with:", profileData); // debug
+
       const result = await updateProfile(profileData.username, profileData.email);
-      // Update user in context
-      login(result.user, localStorage.getItem("authToken"));
-      setProfileMessage({ text: "Profile updated successfully!", type: "success" });
+      console.log("Profile update response:", result); // debug
+
+      // Check if the response contains the user object
+      if (result && result.user) {
+        // Try to update the context
+        const token = localStorage.getItem("authToken");
+        if (login && typeof login === "function") {
+          login(result.user, token);
+        } else {
+          // Fallback: manually update localStorage and reload
+          localStorage.setItem("user", JSON.stringify(result.user));
+          window.location.reload();
+        }
+        setProfileMessage({ text: "Profile updated successfully!", type: "success" });
+      } else {
+        // If the response doesn't have a user, maybe it's a plain success
+        if (result.success) {
+          setProfileMessage({ text: "Profile updated successfully!", type: "success" });
+        } else {
+          throw new Error(result.error || "Update failed");
+        }
+      }
     } catch (err) {
-      const msg = err.response?.data?.error || "Update failed";
+      console.error("Profile update error:", err);
+      const msg = err.response?.data?.error || err.message || "Update failed";
       setProfileMessage({ text: msg, type: "error" });
     } finally {
       setProfileLoading(false);
@@ -99,7 +115,8 @@ export default function Settings() {
       setPasswordMessage({ text: "Password changed successfully!", type: "success" });
       setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      const msg = err.response?.data?.error || "Password change failed";
+      console.error("Password change error:", err);
+      const msg = err.response?.data?.error || err.message || "Password change failed";
       setPasswordMessage({ text: msg, type: "error" });
     } finally {
       setPasswordLoading(false);
@@ -134,7 +151,6 @@ export default function Settings() {
         </button>
       </div>
 
-      {/* Profile Tab */}
       {activeTab === "profile" && (
         <div className="settings-card">
           <h2>Profile Information</h2>
@@ -173,7 +189,6 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Security Tab */}
       {activeTab === "security" && (
         <div className="settings-card">
           <h2>Change Password</h2>
@@ -223,7 +238,6 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Preferences Tab */}
       {activeTab === "preferences" && (
         <div className="settings-card">
           <h2>Appearance</h2>

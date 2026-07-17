@@ -1,17 +1,10 @@
 """
 app.py
 ------
-Flask app factory for the Disease Prediction API. Enables CORS for the
-React frontend, registers the /predict, /explain, /report, and /auth blueprints,
-and initialises the database tables on startup.
-
-Run locally with:
-    python -m src.api.app
-or via gunicorn / flask CLI in production.
+Flask app factory with environment‑based CORS configuration.
 """
 
 import os
-
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -27,10 +20,15 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Absolute paths so Flask finds templates/static regardless of CWD
 _HERE = os.path.dirname(__file__)
 _TEMPLATE_FOLDER = os.path.join(_HERE, "templates")
 _STATIC_FOLDER = os.path.join(_HERE, "static")
+
+ALLOWED_ORIGINS = [
+    "https://ml-early-disease-prediction.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 
 def create_app() -> Flask:
@@ -39,10 +37,16 @@ def create_app() -> Flask:
         template_folder=_TEMPLATE_FOLDER,
         static_folder=_STATIC_FOLDER,
     )
-    CORS(
-        app, origins=["https://ml-early-disease-prediction.vercel.app"]
-    )  # allow all origins; restrict via env config in production
 
+    # ---- CORS: conditional ----
+    if os.getenv("FLASK_ENV") == "production":
+        CORS(app, origins=ALLOWED_ORIGINS)
+        logger.info(f"CORS restricted to: {ALLOWED_ORIGINS}")
+    else:
+        CORS(app)  # allow all origins in development
+        logger.info("CORS: all origins allowed (development)")
+
+    # ---- Blueprints ----
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(explain_bp)
     app.register_blueprint(report_bp, url_prefix="/api/reports")
@@ -51,6 +55,7 @@ def create_app() -> Flask:
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
 
+    # ---- Health check ----
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({"status": "ok"}), 200

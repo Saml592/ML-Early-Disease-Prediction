@@ -28,7 +28,7 @@ predict_bp = Blueprint("predict", __name__)
 MODEL_TYPES = ["logistic_regression", "random_forest", "ann"]
 
 
-@predict_bp.route("/", methods=["POST"])
+@predict_bp.route("", methods=["POST"])  # no slash
 def predict():
     payload = request.get_json(silent=True)
     if payload is None:
