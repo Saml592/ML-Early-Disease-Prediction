@@ -21,7 +21,7 @@ import axios from "axios";
 // });
 
 // Temporary hardcode – will work immediately
-const baseURL = "https://ml-early-disease-prediction.onrender.com";
+const baseURL = process.env.NODE_ENV === "development" ? "" : "https://ml-early-disease-prediction.onrender.com";
 console.log("🔍 API Base URL (hardcoded):", baseURL);
 
 const apiClient = axios.create({

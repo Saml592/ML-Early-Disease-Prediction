@@ -23,6 +23,7 @@ from src.api.routes.auth import auth_bp
 from src.api.routes.dashboard import dashboard_bp
 from src.api.routes.patients import patients_bp
 from src.api.routes.analytics import analytics_bp
+from src.api.routes.explain import explain_bp
 
 # DO NOT import explain_bp – it's broken/missing
 # We'll skip it for now to get the app running.
@@ -58,6 +59,7 @@ def create_app() -> Flask:
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(explain_bp)
 
     # DO NOT register explain_bp – it's missing its dependency
     # If you need it later, fix shap_explainer.py first.

@@ -102,7 +102,21 @@ export default function ExplainableAI() {
       const result = await explainDisease(disease, payload, modelType);
       setExplanation(result);
     } catch (err) {
-      const msg = err?.response?.data?.error || err.message || "Explanation failed";
+      const data = err?.response?.data;
+      let msg = data?.error || err.message || "Explanation failed";
+
+      // Pydantic validation errors include a `details` array with per-field
+      // messages (e.g. "Input should be a valid integer" for a missing
+      // required field like age). Surface those instead of the generic
+      // "Validation failed" banner so the user knows what to fix.
+      if (Array.isArray(data?.details) && data.details.length > 0) {
+        const fieldMessages = data.details.map((d) => {
+          const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : d.loc;
+          return `${field}: ${d.msg}`;
+        });
+        msg = `${msg} — ${fieldMessages.join("; ")}`;
+      }
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -117,7 +131,7 @@ export default function ExplainableAI() {
 
   // Helper to render form fields (reuse layout from PatientForm)
   // We'll keep it simple here; you can expand if needed.
-  const renderField = (name, label, type = "text", step = null) => (
+  const renderField = (name, label, type = "text", step = null, required = false) => (
     <label key={name}>
       {label}
       <input
@@ -126,6 +140,9 @@ export default function ExplainableAI() {
         value={patient[name] ?? ""}
         onChange={handlePatientChange}
         step={step}
+        required={required}
+        min={type === "number" && name === "age" ? 1 : undefined}
+        max={type === "number" && name === "age" ? 120 : undefined}
       />
     </label>
   );
@@ -162,7 +179,7 @@ export default function ExplainableAI() {
 
             <fieldset>
               <legend>Patient Data</legend>
-              {renderField("age", "Age *", "number")}
+              {renderField("age", "Age *", "number", null, true)}
               {renderField("bmi", "BMI", "number", "0.1")}
               {renderField("glucose", "Glucose (mg/dL)", "number")}
               {renderField("blood_pressure", "Blood Pressure (mm Hg)", "number")}

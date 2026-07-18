@@ -51,7 +51,7 @@ from src.api.utils import (
     load_selected_features,
     predict_with_model,
 )
-from src.explainability.shap_explainer import explain_prediction
+from src.api.shap_explainer import explain_prediction
 from src.utils.config import CONFIDENCE_THRESHOLD, DISEASES
 from src.utils.logger import get_logger
 from sqlalchemy import desc  # <-- add this

@@ -62,6 +62,13 @@ export default function Dashboard() {
   const [riskDist, setRiskDist] = useState([]);
   const [monthlyAccuracy, setMonthlyAccuracy] = useState([]);
 
+  // --- Color mapping for disease distribution ---
+  const DISEASE_COLORS = {
+    diabetes: "#3b82f6",    // blue
+    heart: "#ef4444",       // red
+    hypertension: "#f59e0b" // yellow
+  };
+
   // --- Fetch functions ---
   const fetchMetrics = async () => {
     const res = await apiClient.get("/metrics");
@@ -238,7 +245,10 @@ export default function Dashboard() {
                 dataKey="value"
               >
                 {diseaseDist.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={DISEASE_COLORS[entry.name?.toLowerCase()] || "#6b7280"}
+                  />
                 ))}
               </Pie>
               <Tooltip />
