@@ -12,7 +12,7 @@ or via gunicorn / flask CLI in production.
 
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect
 from flask_cors import CORS
 from src.api.database import init_db
 
@@ -69,6 +69,11 @@ def create_app() -> Flask:
 
     # DO NOT register explain_bp – it's missing its dependency
     # If you need it later, fix shap_explainer.py first.
+
+    # ---- Root redirect — sends browser visitors to the Vercel frontend ----
+    @app.route("/", methods=["GET"])
+    def root():
+        return redirect("https://ml-early-disease-prediction.vercel.app", code=302)
 
     # ---- Health check ----
     @app.route("/health", methods=["GET"])
