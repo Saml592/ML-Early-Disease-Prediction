@@ -1,7 +1,6 @@
 # src/explainability/shap_explainer.py
 # Temporary placeholder – replace with real SHAP implementation later.
 
-
 def explain_prediction(disease, patient_data, model_type="random_forest"):
     """
     Stub for SHAP explanation.

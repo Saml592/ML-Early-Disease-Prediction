@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import DashboardCard from "../components/DashboardCard";
 import {
   LineChart,
@@ -24,24 +24,7 @@ import {
 } from "recharts";
 import "../styles/Dashboard.css";
 
-// Helper to get auth token from localStorage
-const getAuthToken = () => localStorage.getItem("authToken");
-
-// Axios instance with auth header
-const apiClient = axios.create({
-  baseURL: "/api/dashboard",
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// apiClient is imported from services/api — uses Render backend in production
 
 export default function Dashboard() {
   // --- State ---
@@ -62,30 +45,37 @@ export default function Dashboard() {
   const [riskDist, setRiskDist] = useState([]);
   const [monthlyAccuracy, setMonthlyAccuracy] = useState([]);
 
+  // --- Color mapping for disease distribution ---
+  const DISEASE_COLORS = {
+    diabetes: "#3b82f6",    // blue
+    heart: "#ef4444",       // red
+    hypertension: "#f59e0b" // yellow
+  };
+
   // --- Fetch functions ---
   const fetchMetrics = async () => {
-    const res = await apiClient.get("/metrics");
+    const res = await apiClient.get("/api/dashboard/metrics");
     if (res.data.success) {
       setStats(res.data.data);
     }
   };
 
   const fetchDailyPredictions = async () => {
-    const res = await apiClient.get("/daily-predictions");
+    const res = await apiClient.get("/api/dashboard/daily-predictions");
     if (res.data.success) {
       setDailyData(res.data.data);
     }
   };
 
   const fetchDiseaseDistribution = async () => {
-    const res = await apiClient.get("/disease-distribution");
+    const res = await apiClient.get("/api/dashboard/disease-distribution");
     if (res.data.success) {
       setDiseaseDist(res.data.data);
     }
   };
 
   const fetchRiskDistribution = async () => {
-    const res = await apiClient.get("/risk-distribution");
+    const res = await apiClient.get("/api/dashboard/risk-distribution");
     if (res.data.success) {
       setRiskDist(res.data.data);
     }
@@ -93,7 +83,7 @@ export default function Dashboard() {
 
   const fetchMonthlyAccuracy = async () => {
     // This endpoint is mocked on the backend; we keep it as is
-    const res = await apiClient.get("/monthly-accuracy");
+    const res = await apiClient.get("/api/dashboard/monthly-accuracy");
     if (res.data.success) {
       setMonthlyAccuracy(res.data.data);
     }
@@ -238,7 +228,10 @@ export default function Dashboard() {
                 dataKey="value"
               >
                 {diseaseDist.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={DISEASE_COLORS[entry.name?.toLowerCase()] || "#6b7280"}
+                  />
                 ))}
               </Pie>
               <Tooltip />

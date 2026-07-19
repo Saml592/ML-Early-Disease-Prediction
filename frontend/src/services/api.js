@@ -1,17 +1,24 @@
 /**
  * api.js
  * ------
- * Axios instance using the React proxy (no CORS in dev).
- * All requests are relative; the proxy forwards to http://localhost:5000.
+ * Axios instance configured for the Render backend in production
+ * and the local dev proxy (CRA) in development.
  * Includes JWT interceptor and 401 handling.
  */
-// FORCE NEW BUILD - 2026-07-15
-// FORCE DEPLOY – 2026-07-15 20:30
 import axios from "axios";
 
+// In development: use CRA proxy (empty string → proxied to localhost:5000)
+// In production:  use REACT_APP_API_BASE_URL env var set in Vercel dashboard,
+//                 falling back to the Render URL as a safety net.
+const baseURL =
+  process.env.NODE_ENV === "development"
+    ? ""
+    : (process.env.REACT_APP_API_BASE_URL || "https://ml-early-disease-prediction-0bzh.onrender.com");
+
+console.log("🔍 API Base URL:", baseURL);
 
 const apiClient = axios.create({
-  baseURL: "",   // ← must be empty!
+  baseURL,
   headers: { "Content-Type": "application/json" },
   timeout: 90000,
 });

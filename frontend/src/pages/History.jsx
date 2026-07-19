@@ -5,23 +5,11 @@
  */
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import "../styles/History.css";
 
-const getAuthToken = () => localStorage.getItem("authToken");
+// apiClient is imported from services/api — uses Render backend in production
 
-const apiClient = axios.create({
-  baseURL: "/predict",
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 export default function History() {
   const [loading, setLoading] = useState(true);
@@ -39,7 +27,7 @@ export default function History() {
       try {
         const params = new URLSearchParams({ limit, offset });
         if (diseaseFilter) params.append("disease", diseaseFilter);
-        const res = await apiClient.get(`/history?${params.toString()}`);
+        const res = await apiClient.get(`/predict/history?${params.toString()}`);
         if (res.data.success) {
           setPredictions(res.data.data.data);
           setTotal(res.data.data.total);

@@ -18,7 +18,7 @@ from pydantic import ValidationError
 from src.api.database import log_prediction
 from src.api.schemas import ExplainRequest
 from src.api.utils import build_model_input, load_background_sample, load_model
-from src.explainability.shap_explainer import explain_prediction
+from src.api.shap_explainer import explain_prediction
 from src.utils.config import CONFIDENCE_THRESHOLD, DISEASES
 from src.utils.logger import get_logger
 

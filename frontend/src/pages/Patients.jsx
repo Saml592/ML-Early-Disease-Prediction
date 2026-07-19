@@ -5,23 +5,11 @@
  */
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import "../styles/Patients.css";
 
-const getAuthToken = () => localStorage.getItem("authToken");
+// apiClient is imported from services/api — uses Render backend in production
 
-const apiClient = axios.create({
-  baseURL: "/api/patients",
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // ---- Modal component for Add/Edit ----
 function PatientModal({ isOpen, onClose, patient, onSubmit, loading }) {
@@ -123,7 +111,7 @@ export default function Patients() {
     try {
       const params = new URLSearchParams({ limit, offset });
       if (search) params.append("search", search);
-      const res = await apiClient.get(`/?${params.toString()}`);
+      const res = await apiClient.get(`/api/patients/?${params.toString()}`);
       if (res.data.success) {
         setPatients(res.data.data.data);
         setTotal(res.data.data.total);
@@ -143,7 +131,7 @@ export default function Patients() {
     try {
       const params = new URLSearchParams({ limit, offset });
       if (search) params.append("search", search);
-      const res = await apiClient.get(`/?${params.toString()}`);
+      const res = await apiClient.get(`/api/patients/?${params.toString()}`);
       if (res.data.success) {
         setPatients(res.data.data.data);
         setTotal(res.data.data.total);
@@ -186,9 +174,9 @@ export default function Patients() {
     setSubmitting(true);
     try {
       if (editingPatient) {
-        await apiClient.put(`/${editingPatient.id}`, formData);
+        await apiClient.put(`/api/patients/${editingPatient.id}`, formData);
       } else {
-        await apiClient.post("/", formData);
+        await apiClient.post("/api/patients/", formData);
       }
       setShowModal(false);
       fetchPatients();
@@ -202,7 +190,7 @@ export default function Patients() {
   const handleDelete = async (patient) => {
     if (!window.confirm(`Delete patient "${patient.name}"?`)) return;
     try {
-      await apiClient.delete(`/${patient.id}`);
+      await apiClient.delete(`/api/patients/${patient.id}`);
       fetchPatients();
     } catch (err) {
       alert(err.response?.data?.error || "Delete failed");

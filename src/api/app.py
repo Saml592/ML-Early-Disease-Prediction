@@ -12,7 +12,7 @@ or via gunicorn / flask CLI in production.
 
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect
 from flask_cors import CORS
 from src.api.database import init_db
 
@@ -23,6 +23,7 @@ from src.api.routes.auth import auth_bp
 from src.api.routes.dashboard import dashboard_bp
 from src.api.routes.patients import patients_bp
 from src.api.routes.analytics import analytics_bp
+from src.api.routes.explain import explain_bp
 
 # DO NOT import explain_bp – it's broken/missing
 # We'll skip it for now to get the app running.
@@ -41,6 +42,14 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+CORS_CONFIG = {
+    "origins": ALLOWED_ORIGINS,
+    "supports_credentials": True,
+    "allow_headers": ["Content-Type", "Authorization"],
+    "expose_headers": ["Content-Disposition"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -48,9 +57,19 @@ def create_app() -> Flask:
         template_folder=_TEMPLATE_FOLDER,
         static_folder=_STATIC_FOLDER,
     )
-    CORS(
-        app, origins=["https://ml-early-disease-prediction.vercel.app"]
-    )  # allow all origins; restrict via env config in production
+    CORS(app, **CORS_CONFIG)
+
+    # Explicit OPTIONS handler — guarantees preflight passes regardless of
+    # Flask-CORS version quirks with credentials + specific origins
+    @app.after_request
+    def apply_cors_headers(response):
+        origin = "https://ml-early-disease-prediction.vercel.app"
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+        return response
 
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(report_bp, url_prefix="/api/reports")
@@ -58,9 +77,15 @@ def create_app() -> Flask:
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(explain_bp)
 
     # DO NOT register explain_bp – it's missing its dependency
     # If you need it later, fix shap_explainer.py first.
+
+    # ---- Root redirect — sends browser visitors to the Vercel frontend ----
+    @app.route("/", methods=["GET"])
+    def root():
+        return redirect("https://ml-early-disease-prediction.vercel.app", code=302)
 
     # ---- Health check ----
     @app.route("/health", methods=["GET"])
@@ -78,7 +103,11 @@ def create_app() -> Flask:
 
     with app.app_context():
         init_db()
+        db_url = os.environ.get("DATABASE_URL", "SQLite (local fallback)")
+        jwt_set = "SET" if os.environ.get("JWT_SECRET") else "NOT SET (using default — insecure)"
         logger.info("Database initialised.")
+        logger.info(f"DB backend  : {db_url[:60]}")
+        logger.info(f"JWT_SECRET  : {jwt_set}")
     return app
 
 
