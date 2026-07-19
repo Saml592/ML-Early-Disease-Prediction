@@ -7,10 +7,13 @@
  */
 import axios from "axios";
 
+// In development: use CRA proxy (empty string → proxied to localhost:5000)
+// In production:  use REACT_APP_API_BASE_URL env var set in Vercel dashboard,
+//                 falling back to the Render URL as a safety net.
 const baseURL =
   process.env.NODE_ENV === "development"
-    ? "" // CRA proxy → http://localhost:5000
-    : "https://ml-early-disease-prediction-0bzh.onrender.com";
+    ? ""
+    : (process.env.REACT_APP_API_BASE_URL || "https://ml-early-disease-prediction-0bzh.onrender.com");
 
 console.log("🔍 API Base URL:", baseURL);
 
