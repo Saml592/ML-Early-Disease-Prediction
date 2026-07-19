@@ -1,28 +1,18 @@
 /**
  * api.js
  * ------
- * Axios instance using the React proxy (no CORS in dev).
- * All requests are relative; the proxy forwards to http://localhost:5000.
+ * Axios instance configured for the Render backend in production
+ * and the local dev proxy (CRA) in development.
  * Includes JWT interceptor and 401 handling.
  */
-// FORCE NEW BUILD - 2026-07-15
-// FORCE DEPLOY – 2026-07-15 20:30
 import axios from "axios";
 
+const baseURL =
+  process.env.NODE_ENV === "development"
+    ? "" // CRA proxy → http://localhost:5000
+    : "https://ml-early-disease-prediction-0bzh.onrender.com";
 
-// const baseURL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || "";
-// const baseURL = "https://ml-early-disease-prediction.onrender.com";
-// console.log("🔍 [HARDCODED] API Base URL:", baseURL);
-// console.log("🔍 REACT_APP_API_BASE_URL:", process.env.REACT_APP_API_BASE_URL);
-// const apiClient = axios.create({
-//   baseURL,
-//   headers: { "Content-Type": "application/json" },
-//   timeout: 90000,
-// });
-
-// Temporary hardcode – will work immediately
-const baseURL = process.env.NODE_ENV === "development" ? "" : "https://ml-early-disease-prediction.onrender.com";
-console.log("🔍 API Base URL (hardcoded):", baseURL);
+console.log("🔍 API Base URL:", baseURL);
 
 const apiClient = axios.create({
   baseURL,

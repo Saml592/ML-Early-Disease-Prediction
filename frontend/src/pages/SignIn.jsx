@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from "react";
-import axios from "axios";
+import { login } from "../services/api";
 import "./Auth.css";
 
 export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLanding }) {
@@ -49,13 +49,11 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
     setError("");
 
     try {
-      const response = await axios.post("/auth/login", {
-        username: formData.username,
-        password: formData.password,
-      });
+      // Use the configured apiClient (with Render base URL for production)
+      const data = await login(formData.username, formData.password);
 
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       setFormData({
         username: "",
@@ -63,7 +61,7 @@ export default function SignIn({ onSignInSuccess, onSwitchToSignUp, onSwitchToLa
       });
 
       if (onSignInSuccess) {
-        onSignInSuccess(response.data.user);
+        onSignInSuccess(data.user);
       }
 
       window.location.href = "/";
