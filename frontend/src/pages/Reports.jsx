@@ -5,23 +5,11 @@
  */
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import "../styles/Reports.css";
 
-const getAuthToken = () => localStorage.getItem("authToken");
+// apiClient is imported from services/api — uses Render backend in production
 
-const apiClient = axios.create({
-  baseURL: "/api/reports",
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 export default function Reports() {
   const [loading, setLoading] = useState(true);
@@ -33,7 +21,7 @@ export default function Reports() {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiClient.get("?limit=100");
+        const res = await apiClient.get("/api/reports/?limit=100");
         if (res.data.success) {
           setReports(res.data.data);
         } else {

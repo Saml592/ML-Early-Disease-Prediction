@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import {
   LineChart,
   Line,
@@ -24,24 +24,7 @@ import {
 } from "recharts";
 import "../styles/Analytics.css";
 
-// Helper to get auth token
-const getAuthToken = () => localStorage.getItem("authToken");
-
-// Axios instance with auth header
-const apiClient = axios.create({
-  baseURL: "/api/analytics",
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// apiClient is imported from services/api — uses Render backend in production
 
 export default function Analytics() {
   // State
@@ -92,11 +75,11 @@ export default function Analytics() {
           riskRes,
           ageRes,
         ] = await Promise.all([
-          apiClient.get("/summary"),
-          apiClient.get("/predictions-by-date?days=30"),
-          apiClient.get("/model-performance"),
-          apiClient.get("/risk-distribution"),
-          apiClient.get("/age-group-analysis"),
+          apiClient.get("/api/analytics/summary"),
+          apiClient.get("/api/analytics/predictions-by-date?days=30"),
+          apiClient.get("/api/analytics/model-performance"),
+          apiClient.get("/api/analytics/risk-distribution"),
+          apiClient.get("/api/analytics/age-group-analysis"),
         ]);
 
         if (summaryRes.data.success) setSummary(summaryRes.data.data);
