@@ -42,6 +42,14 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+CORS_CONFIG = {
+    "origins": ALLOWED_ORIGINS,
+    "supports_credentials": True,
+    "allow_headers": ["Content-Type", "Authorization"],
+    "expose_headers": ["Content-Disposition"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -49,9 +57,7 @@ def create_app() -> Flask:
         template_folder=_TEMPLATE_FOLDER,
         static_folder=_STATIC_FOLDER,
     )
-    CORS(
-        app, origins=["https://ml-early-disease-prediction.vercel.app"]
-    )  # allow all origins; restrict via env config in production
+    CORS(app, **CORS_CONFIG)
 
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(report_bp, url_prefix="/api/reports")
