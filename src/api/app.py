@@ -59,6 +59,18 @@ def create_app() -> Flask:
     )
     CORS(app, **CORS_CONFIG)
 
+    # Explicit OPTIONS handler — guarantees preflight passes regardless of
+    # Flask-CORS version quirks with credentials + specific origins
+    @app.after_request
+    def apply_cors_headers(response):
+        origin = "https://ml-early-disease-prediction.vercel.app"
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+        return response
+
     app.register_blueprint(predict_bp, url_prefix="/predict")
     app.register_blueprint(report_bp, url_prefix="/api/reports")
     app.register_blueprint(auth_bp)
@@ -91,7 +103,11 @@ def create_app() -> Flask:
 
     with app.app_context():
         init_db()
+        db_url = os.environ.get("DATABASE_URL", "SQLite (local fallback)")
+        jwt_set = "SET" if os.environ.get("JWT_SECRET") else "NOT SET (using default — insecure)"
         logger.info("Database initialised.")
+        logger.info(f"DB backend  : {db_url[:60]}")
+        logger.info(f"JWT_SECRET  : {jwt_set}")
     return app
 
 
