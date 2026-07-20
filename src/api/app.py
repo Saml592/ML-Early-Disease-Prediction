@@ -12,6 +12,9 @@ or via gunicorn / flask CLI in production.
 
 import os
 
+# Suppress TensorFlow C++ backend INFO and WARNING messages (e.g. CUDA/TensorRT warnings)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from flask import Flask, jsonify, redirect
 from flask_cors import CORS
 from src.api.database import init_db
