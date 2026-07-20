@@ -114,7 +114,7 @@ class PredictionLog(Base):
 
 
 def init_db():
-    \"\"\"Create all tables if they don't already exist.\"\"\"
+    """Create all tables if they don't already exist."""
     Base.metadata.create_all(bind=engine)
     logger.info(f"Database initialized at {DATABASE_URL}")
 
