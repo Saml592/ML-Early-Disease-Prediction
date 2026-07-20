@@ -85,6 +85,8 @@ class ReportRequest(BaseModel):
     patient: PatientData
     predictions: Optional[dict] = None  # pre-computed /predict response body
     model_type: str = "random_forest"  # which model to use for SHAP charts
+
+    model_config = {"protected_namespaces": ()}
     diseases: Optional[list] = None  # subset of diseases; None → all three
 
 

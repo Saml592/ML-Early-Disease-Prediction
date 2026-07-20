@@ -114,9 +114,23 @@ class PredictionLog(Base):
 
 
 def init_db():
-    """Create all tables if they don't already exist."""
+    \"\"\"Create all tables if they don't already exist.\"\"\"
     Base.metadata.create_all(bind=engine)
     logger.info(f"Database initialized at {DATABASE_URL}")
+
+    db = SessionLocal()
+    try:
+        if not db.query(User).first():
+            logger.info("Seeding default admin user (benny).")
+            default_user = User(username="benny", email="benny@example.com")
+            default_user.set_password("admin123")
+            db.add(default_user)
+            db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.error(f"Failed to seed default user: {exc}")
+    finally:
+        db.close()
 
 
 def get_db_session():
