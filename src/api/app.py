@@ -93,7 +93,23 @@ def create_app() -> Flask:
     # ---- Health check ----
     @app.route("/health", methods=["GET"])
     def health():
-        return jsonify({"status": "ok"}), 200
+        from src.utils.config import MODELS_DIR
+        diseases = ["diabetes", "heart", "hypertension"]
+        suffixes = ["logistic_regression.joblib", "random_forest.joblib",
+                    "ann.h5", "scaler.joblib", "encoders.joblib", "selected_features.joblib"]
+        missing, found = [], []
+        for d in diseases:
+            for s in suffixes:
+                fname = f"{d}_{s}"
+                fpath = os.path.join(MODELS_DIR, fname)
+                (found if os.path.exists(fpath) else missing).append(fname)
+        status = "ok" if not missing else "degraded"
+        return jsonify({
+            "status": status,
+            "models_dir": MODELS_DIR,
+            "models_found": len(found),
+            "models_missing": missing,
+        }), 200 if status == "ok" else 503
 
     @app.errorhandler(404)
     def not_found(_):
