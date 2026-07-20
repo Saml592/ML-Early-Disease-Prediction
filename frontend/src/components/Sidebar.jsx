@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import "../styles/Sidebar.css";
 
-export default function Sidebar({ currentPage, onNavigate }) {
+export default function Sidebar({ currentPage, onNavigate, isOpen }) {
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const toggleMenu = (menuName) => {
@@ -84,7 +84,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? " open" : ""}`}>
       <div className="sidebar-header">
         <div className="logo-container">
           <div className="logo-icon">🏥</div>

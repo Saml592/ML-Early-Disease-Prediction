@@ -28,6 +28,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("landing");
   const [predictionData, setPredictionData] = useState(null);
   const [patientPayload, setPatientPayload] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleResult = (data, payload) => {
     setPredictionData(data);
@@ -86,8 +87,22 @@ export default function App() {
   return (
     <ProtectedRoute>
       <div className="app-layout">
-        <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
-        <TopNavigation user={user} onLogout={handleLogout} onSearch={handleSearch} />
+        {/* Mobile overlay */}
+        <div
+          className={`sidebar-overlay ${sidebarOpen ? "visible" : ""}`}
+          onClick={() => setSidebarOpen(false)}
+        />
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={(page) => { setCurrentPage(page); setSidebarOpen(false); }}
+          isOpen={sidebarOpen}
+        />
+        <TopNavigation
+          user={user}
+          onLogout={handleLogout}
+          onSearch={handleSearch}
+          onMenuToggle={() => setSidebarOpen((o) => !o)}
+        />
 
         <main className="app-content">
           {currentPage === "dashboard" && <Dashboard />}

@@ -35,8 +35,8 @@ data/processed/*.csv
 !data/raw/generate_hypertension_data.py   # keep the script
 
 # Models – large .joblib files (skip them, they can be regenerated)
-models/saved/*.joblib
-models/saved/*.h5
+# models/saved/*.joblib
+# models/saved/*.h5
 
 # IDE / OS
 .vscode/

@@ -16,8 +16,27 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 99;
+  z-index: 199;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hamburger button - hidden on desktop */
+.hamburger-button {
+  display: none;
+  background: none;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  margin-right: 12px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hamburger-button:hover {
+  background: #f3f4f6;
+  color: #2d5f4f;
 }
 
 .nav-left {
@@ -256,13 +275,19 @@
     padding: 0 16px;
   }
 
+  .hamburger-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .search-container {
-    max-width: 250px;
+    max-width: 220px;
   }
 
   .nav-right {
-    gap: 16px;
-    margin-left: 16px;
+    gap: 12px;
+    margin-left: 12px;
   }
 
   .user-info {
@@ -270,31 +295,27 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .top-navigation {
     height: 60px;
     padding: 0 12px;
   }
 
   .search-container {
-    max-width: 150px;
+    max-width: 130px;
   }
 
   .search-input {
-    font-size: 12px;
-    padding: 8px 10px 8px 32px;
-  }
-
-  .search-icon {
-    width: 16px;
-    height: 16px;
+    font-size: 14px;
+    padding: 8px 10px 8px 34px;
   }
 
   .nav-right {
-    gap: 12px;
+    gap: 8px;
   }
 
   .notification-dropdown {
-    min-width: 280px;
+    min-width: 260px;
+    right: -40px;
   }
 }

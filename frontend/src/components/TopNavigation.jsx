@@ -5,10 +5,10 @@
  */
 
 import React, { useState } from "react";
-import { Search, Bell, LogOut, User } from "lucide-react";
+import { Search, Bell, LogOut, User, Menu } from "lucide-react";
 import "../styles/TopNavigation.css";
 
-export default function TopNavigation({ user, onLogout, onSearch }) {
+export default function TopNavigation({ user, onLogout, onSearch, onMenuToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -24,6 +24,9 @@ export default function TopNavigation({ user, onLogout, onSearch }) {
   return (
     <header className="top-navigation">
       <div className="nav-left">
+        <button className="hamburger-button" onClick={onMenuToggle}>
+          <Menu size={20} />
+        </button>
         <div className="search-container">
           <Search size={18} className="search-icon" />
           <input
